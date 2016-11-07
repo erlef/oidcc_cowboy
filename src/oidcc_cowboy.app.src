@@ -1,0 +1,13 @@
+{application,
+ oidcc_cowboy, [
+         {description, "OpenId Connect cowboy handler"},
+         {vsn, "0.1.0"},
+         {modules, []},
+         {registered, []},
+         {applications, [
+                        oidcc
+                        ]},
+         {maintainers, ["Bas Wegh"]},
+         {licenses, ["Apache 2.0"]},
+         {links, [{"GitHub","https://github.com/indigo-dc/oidcc_cowboy"}]}
+        ]}.

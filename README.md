@@ -1,2 +1,2 @@
 # oidcc_cowboy
-Cowboy OpenId Connect support by using oidcc
+Cowboy callback module for easy integration of OpenId Connect, using oidcc
