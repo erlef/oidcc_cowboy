@@ -1,12 +1,13 @@
 REBAR = $(shell pwd)/rebar3
 APP=oidcc
 
-.PHONY: all ct test clean elvis compile 
+.PHONY: all ct test clean elvis compile
 
 all: compile
 
 clean:
 	$(REBAR) clean
+	rm -rf _build
 
 compile:
 	$(REBAR) compile

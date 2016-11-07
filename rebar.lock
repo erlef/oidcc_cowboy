@@ -1,0 +1,11 @@
+[{<<"base64url">>,{pkg,<<"base64url">>,<<"0.0.1">>},2},
+ {<<"cowboy">>,{pkg,<<"cowboy">>,<<"1.0.4">>},0},
+ {<<"cowlib">>,{pkg,<<"cowlib">>,<<"1.0.2">>},1},
+ {<<"erljwt">>,{pkg,<<"erljwt">>,<<"0.2.1">>},1},
+ {<<"gun">>,{pkg,<<"gun">>,<<"1.0.0-pre.1">>},1},
+ {<<"jsone">>,{pkg,<<"jsone">>,<<"1.4.0">>},2},
+ {<<"oidcc">>,
+  {git,"https://github.com/indigo-dc/oidcc",
+       {ref,"bce0720789d427435e168889c0bc4fe9a6c7a12a"}},
+  0},
+ {<<"ranch">>,{pkg,<<"ranch">>,<<"1.2.1">>},1}].

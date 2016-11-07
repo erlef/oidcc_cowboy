@@ -5,7 +5,8 @@
          {modules, []},
          {registered, []},
          {applications, [
-                        oidcc
+                        oidcc,
+                        cowboy
                         ]},
          {maintainers, ["Bas Wegh"]},
          {licenses, ["Apache 2.0"]},

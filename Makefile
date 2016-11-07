@@ -23,4 +23,5 @@ compile:
 
 
 basic_client:
+	make -C example/basic_client clean
 	make -C example/basic_client run
