@@ -16,6 +16,6 @@ compile:
 run:
 	$(REBAR) run
 
-oidcc_dev:
-	cp -r ../../src/* _build/default/lib/oidcc/src
-	rm -rf _build/default/lib/oidcc/ebin
+oidcc_cowboy_dev:
+	cp -r ../../src/* _build/default/lib/oidcc_cowboy/src
+	rm -rf _build/default/lib/oidcc_cowboy/ebin

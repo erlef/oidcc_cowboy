@@ -74,22 +74,24 @@ handle_return(Req, #state{code = AuthCode,
                           cookie_data = CookieData
                          } = State) ->
     {ok, Provider} = oidcc_session:get_provider(Session),
-    {ok, Pkce} = oidcc_session:get_pkce(Session),
-    {ok, Token} = oidcc:retrieve_token(AuthCode, Pkce, Provider),
-    {ok, Nonce} = oidcc_session:get_nonce(Session),
-    IsUserAgent = oidcc_session:is_user_agent(UserAgent, Session),
-    CheckUserAgent = application:get_env(oidcc, check_user_agent, true),
-    IsPeerIp = oidcc_session:is_peer_ip(PeerIp, Session),
-    CheckPeerIp = application:get_env(oidcc, check_peer_ip, true),
-    CookieValid = oidcc_session:is_cookie_data(CookieData, Session),
     {ok, ClientModId} = oidcc_session:get_client_mod(Session),
+    try
+        {ok, Pkce} = oidcc_session:get_pkce(Session),
+        {ok, Token} = oidcc:retrieve_token(AuthCode, Pkce, Provider),
+        {ok, Nonce} = oidcc_session:get_nonce(Session),
+        IsUserAgent = oidcc_session:is_user_agent(UserAgent, Session),
+        CheckUserAgent = application:get_env(oidcc, check_user_agent, true),
+        IsPeerIp = oidcc_session:is_peer_ip(PeerIp, Session),
+        CheckPeerIp = application:get_env(oidcc, check_peer_ip, true),
+        CookieValid = oidcc_session:is_cookie_data(CookieData, Session),
 
-    UserAgentValid = ((not CheckUserAgent) or IsUserAgent),
-    PeerIpValid = ((not CheckPeerIp) or IsPeerIp),
-    TokenResult = oidcc:parse_and_validate_token(Token, Provider,
-                                                         Nonce),
-    try check_token_and_fingerprint(TokenResult, UserAgentValid,
-                                    PeerIpValid, CookieValid) of
+        UserAgentValid = ((not CheckUserAgent) or IsUserAgent),
+        PeerIpValid = ((not CheckPeerIp) or IsPeerIp),
+        TokenResult = oidcc:parse_and_validate_token(Token, Provider,
+                                                     Nonce),
+        check_token_and_fingerprint(TokenResult, UserAgentValid, PeerIpValid,
+                                    CookieValid)
+    of
         {ok, VerifiedToken0} ->
             {ok, VerifiedToken} = add_userinfo_if_configured(VerifiedToken0,
                                                              Provider),
@@ -98,7 +100,7 @@ handle_return(Req, #state{code = AuthCode,
                                                       ClientModId),
             {ok, Req3} = apply_updates(UpdateList, Req2),
             {ok, Req3, State}
-    catch Error ->
+    catch _:Error ->
             handle_fail(internal, Error, Req, State)
     end.
 
