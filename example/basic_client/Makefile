@@ -7,6 +7,7 @@ all: compile
 
 clean:
 	$(REBAR) clean
+	rm -f rebar.lock
 	rm -rf _build
 
 compile:

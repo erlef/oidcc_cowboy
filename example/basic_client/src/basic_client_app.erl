@@ -18,7 +18,7 @@ start(_, _) ->
     Dispatch = cowboy_router:compile( [{'_',
 					[
 					 {"/", basic_client_http, []},
-					 {"/oidc", oidcc_http_handler, []},
+					 {"/oidc", oidcc_cowboy, []},
 					 {"/oidc/return", oidcc_cowboy, []}
 					]}]),
     {ok, _} = cowboy:start_http( http_handler
