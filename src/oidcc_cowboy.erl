@@ -44,6 +44,11 @@ handle(Req, #state{request_type = return, error=Desc} = State) ->
     %% redirect him to the
     Error = oidc_provider_error,
     handle_fail(Error, Desc, Req, State);
+handle(Req, #state{request_type = session_not_found, error=Desc} = State) ->
+    %% the user comes back from the OpenId Connect Provider
+    %% but the error is not found
+    Error = session_not_found,
+    handle_fail(Error, Desc, Req, State);
 handle(Req, #state{request_type = bad_request, error=Desc} = State) ->
     Error = bad_request,
     handle_fail(Error, Desc, Req, State).
@@ -108,11 +113,15 @@ handle_return(Req, #state{code = AuthCode,
 add_userinfo_if_configured(Token, Provider) ->
     GetUserInfo = application:get_env(oidcc, retrieve_userinfo, false),
     add_userinfo_to_token(GetUserInfo, Token, Provider).
+
+
 add_userinfo_to_token(false, Token, _Provider) ->
     {ok, Token};
 add_userinfo_to_token(true, Token, Provider) ->
     Result = oidcc:retrieve_user_info(Token, Provider),
     insert_userinfo_in_token(Result, Token).
+
+
 insert_userinfo_in_token({ok, UserInfo}, Token) ->
     {ok, maps:put(user_info, UserInfo, Token)};
 insert_userinfo_in_token( _, Token) ->
@@ -122,14 +131,14 @@ insert_userinfo_in_token( _, Token) ->
 
 check_token_and_fingerprint({ok, VerifiedToken}, true, true, true) ->
     {ok, VerifiedToken};
-check_token_and_fingerprint(_, true, true, true) ->
-    throw(token_invalid);
-check_token_and_fingerprint(_, false, _, _) ->
-    throw(bad_user_agent);
-check_token_and_fingerprint(_, _, false, _) ->
-    throw(bad_peer_ip);
-check_token_and_fingerprint(_, _, _, false) ->
-    throw(bad_cookie).
+check_token_and_fingerprint(Token, true, true, true) ->
+    throw({token_invalid, Token});
+check_token_and_fingerprint(Token, false, _, _) ->
+    throw({bad_user_agent, Token});
+check_token_and_fingerprint(Token, _, false, _) ->
+    throw({bad_peer_ip, Token});
+check_token_and_fingerprint(Token, _, _, false) ->
+    throw({bad_cookie, Token}).
 
 
 handle_fail(Error, Desc, Req, #state{
@@ -221,18 +230,26 @@ extract_args(Req) ->
         undefined ->
             Method = <<"GET">>,
             {ok, Session} = oidcc_session_mgr:get_session(SessionId),
-            Code = maps:get(code, QsMap, undefined),
-            Error = maps:get(error, QsMap, undefined),
-            State = maps:get(state, QsMap, undefined),
-            ClientModId = maps:get(client_mod, QsMap, undefined),
-            {ok, Req99, NewState#state{request_type=return,
-                                       session = Session,
-                                       code = Code,
-                                       error = Error,
-                                       state = State,
-                                       client_mod = ClientModId,
-                                       cookie_data = CookieData
-                                      }};
+            case oidcc_session_mgr:get_session(SessionId) of
+                {ok, Session} ->
+                    Code = maps:get(code, QsMap, undefined),
+                    Error = maps:get(error, QsMap, undefined),
+                    State = maps:get(state, QsMap, undefined),
+                    ClientModId = maps:get(client_mod, QsMap, undefined),
+                    {ok, Req99, NewState#state{request_type=return,
+                                               session = Session,
+                                               code = Code,
+                                               error = Error,
+                                               state = State,
+                                               client_mod = ClientModId,
+                                               cookie_data = CookieData
+                                              }};
+                {error, Reason} ->
+                    ErrDesc = list_to_binary(io:format("session not found: ~p",
+                                                       [Reason])),
+                    {ok, Req99, NewState#state{request_type=session_not_found,
+                                               error = ErrDesc}}
+            end;
         bad_provider ->
             Desc = <<"unknown provider id">>,
             {ok, Req99, NewState#state{request_type=bad_request,
