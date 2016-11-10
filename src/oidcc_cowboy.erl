@@ -94,8 +94,13 @@ handle_return(Req, #state{code = AuthCode,
         PeerIpValid = ((not CheckPeerIp) or IsPeerIp),
         TokenResult = oidcc:parse_and_validate_token(Token, Provider,
                                                      Nonce),
-        check_token_and_fingerprint(TokenResult, UserAgentValid, PeerIpValid,
-                                    CookieValid)
+        AgentInfo = create_agent_info(UserAgent, Session),
+        IpInfo = create_ip_info(PeerIp, Session),
+        CookieInfo = create_cookie_info(CookieData, Session),
+        check_token_and_fingerprint(TokenResult,
+                                    UserAgentValid, AgentInfo,
+                                    PeerIpValid, IpInfo,
+                                    CookieValid, CookieInfo)
     of
         {ok, VerifiedToken0} ->
             {ok, VerifiedToken} = add_userinfo_if_configured(VerifiedToken0,
@@ -109,6 +114,17 @@ handle_return(Req, #state{code = AuthCode,
             handle_fail(internal, Error, Req, State)
     end.
 
+create_agent_info(UserAgentSecond, Session) ->
+    {ok, UserAgentFirst} = oidcc_session:get_user_agent(Session),
+    #{first => UserAgentFirst, second => UserAgentSecond}.
+
+create_ip_info(IpSecond, Session) ->
+    {ok, IpFirst} = oidcc_session:get_peer_ip(Session),
+    #{first => IpFirst, second => IpSecond}.
+
+create_cookie_info(CookieSecond, Session) ->
+    {ok, CookieFirst} = oidcc_session:get_cookie_data(Session),
+    #{first => CookieFirst, second => CookieSecond}.
 
 add_userinfo_if_configured(Token, Provider) ->
     GetUserInfo = application:get_env(oidcc, retrieve_userinfo, false),
@@ -129,16 +145,16 @@ insert_userinfo_in_token( _, Token) ->
 
 
 
-check_token_and_fingerprint({ok, VerifiedToken}, true, true, true) ->
+check_token_and_fingerprint({ok, VerifiedToken}, true, _, true, _, true, _) ->
     {ok, VerifiedToken};
-check_token_and_fingerprint(TokenError, true, true, true) ->
+check_token_and_fingerprint(TokenError, true, _, true, _, true, _) ->
     throw({token_invalid, TokenError});
-check_token_and_fingerprint(_, false, _, _) ->
-    throw(bad_user_agent);
-check_token_and_fingerprint(_, _, false, _) ->
-    throw(bad_peer_ip);
-check_token_and_fingerprint(_, _, _, false) ->
-    throw(bad_cookie).
+check_token_and_fingerprint(_, false, AgentInfo, _, _, _, _) ->
+    throw({bad_user_agent, AgentInfo});
+check_token_and_fingerprint(_, _, _, false, IpInfo, _, _) ->
+    throw({bad_peer_ip, IpInfo});
+check_token_and_fingerprint(_, _, _, _, _, false, CookieInfo) ->
+    throw({bad_cookie, CookieInfo}).
 
 
 handle_fail(Error, Desc, Req, #state{
@@ -245,10 +261,10 @@ extract_args(Req) ->
                                                cookie_data = CookieData
                                               }};
                 {error, Reason} ->
-                    ErrDesc = list_to_binary(io:format("session not found: ~p",
-                                                       [Reason])),
+                    Desc = list_to_binary(io_lib:format("session not found: ~p",
+                                                        [Reason])),
                     {ok, Req99, NewState#state{request_type=session_not_found,
-                                               error = ErrDesc}}
+                                               error = Desc}}
             end;
         bad_provider ->
             Desc = <<"unknown provider id">>,
