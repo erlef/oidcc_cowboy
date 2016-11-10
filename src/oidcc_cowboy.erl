@@ -131,14 +131,14 @@ insert_userinfo_in_token( _, Token) ->
 
 check_token_and_fingerprint({ok, VerifiedToken}, true, true, true) ->
     {ok, VerifiedToken};
-check_token_and_fingerprint(Token, true, true, true) ->
-    throw({token_invalid, Token});
-check_token_and_fingerprint(Token, false, _, _) ->
-    throw({bad_user_agent, Token});
-check_token_and_fingerprint(Token, _, false, _) ->
-    throw({bad_peer_ip, Token});
-check_token_and_fingerprint(Token, _, _, false) ->
-    throw({bad_cookie, Token}).
+check_token_and_fingerprint(TokenError, true, true, true) ->
+    throw({token_invalid, TokenError});
+check_token_and_fingerprint(_, false, _, _) ->
+    throw(bad_user_agent);
+check_token_and_fingerprint(_, _, false, _) ->
+    throw(bad_peer_ip);
+check_token_and_fingerprint(_, _, _, false) ->
+    throw(bad_cookie).
 
 
 handle_fail(Error, Desc, Req, #state{
