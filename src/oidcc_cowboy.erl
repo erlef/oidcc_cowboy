@@ -27,7 +27,11 @@ init(_, Req, _Opts) ->
     try extract_args(Req) of
         {ok, Req2, State} -> {ok, Req2, State}
     catch
-        _:_ -> {ok, Req, #state{}}
+        _:_ ->
+            Desc = <<"internal error occured">>,
+            {ok, Req, #state{request_type=internal_error,
+                             error = Desc
+                            }}
     end.
 
 handle(Req, #state{request_type = redirect} = State) ->
@@ -46,8 +50,12 @@ handle(Req, #state{request_type = return, error=Desc} = State) ->
     handle_fail(Error, Desc, Req, State);
 handle(Req, #state{request_type = session_not_found, error=Desc} = State) ->
     %% the user comes back from the OpenId Connect Provider
-    %% but the error is not found
+    %% but the session is not found
     Error = session_not_found,
+    handle_fail(Error, Desc, Req, State);
+handle(Req, #state{request_type = internal_error, error=Desc} = State) ->
+    %% something unexpected happened
+    Error = internal_error,
     handle_fail(Error, Desc, Req, State);
 handle(Req, #state{request_type = bad_request, error=Desc} = State) ->
     Error = bad_request,
@@ -234,7 +242,6 @@ extract_args(Req) ->
 
     UserAgent = get_header(<<"user-agent">>, Headers),
     Referer = get_header(<<"referer">>, Headers),
-    Referer = get_header(<<"referer">>, Headers),
     NewState = #state{
                   peer_ip = PeerIP,
                   user_agent = UserAgent,
@@ -245,7 +252,6 @@ extract_args(Req) ->
     case ProviderId of
         undefined ->
             Method = <<"GET">>,
-            {ok, Session} = oidcc_session_mgr:get_session(SessionId),
             case oidcc_session_mgr:get_session(SessionId) of
                 {ok, Session} ->
                     Code = maps:get(code, QsMap, undefined),
