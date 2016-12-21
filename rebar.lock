@@ -6,6 +6,6 @@
  {<<"jsone">>,{pkg,<<"jsone">>,<<"1.4.0">>},2},
  {<<"oidcc">>,
   {git,"https://github.com/indigo-dc/oidcc",
-       {ref,"1d3b4d305717106c1ef71422c57be937ce3462f6"}},
+       {ref,"a5cbd452c53ec33717c304697112c7e81319656a"}},
   0},
  {<<"ranch">>,{pkg,<<"ranch">>,<<"1.2.1">>},1}].
