@@ -1,19 +1,20 @@
-[{<<"base64url">>,
-  {pkg,<<"base64url">>,<<"0.0.1">>,
-       <<"36A90125F5948E3AFD7BE97662A1504B934DD5DAC78451CA6E9ABF85A10286BE">>},
-  2},
+{"1.1.0",
+[{<<"base64url">>,{pkg,<<"base64url">>,<<"0.0.1">>},2},
  {<<"cowboy">>,{pkg,<<"cowboy">>,<<"1.0.4">>},0},
- {<<"cowlib">>,
-  {pkg,<<"cowlib">>,<<"1.0.2">>,
-       <<"9D769A1D062C9C3AC753096F868CA121E2730B9A377DE23DEC0F7E08B1DF84EE">>},
-  1},
+ {<<"cowlib">>,{pkg,<<"cowlib">>,<<"1.0.2">>},1},
  {<<"erljwt">>,{pkg,<<"erljwt">>,<<"0.3.2">>},1},
- {<<"jsone">>,{pkg,<<"jsone">>,<<"1.4.0">>,undefined},2},
+ {<<"jsone">>,{pkg,<<"jsone">>,<<"1.4.0">>},2},
  {<<"oidcc">>,
   {git,"https://github.com/indigo-dc/oidcc",
        {ref,"b0451dd213f385619af28c5951a527f7695ea934"}},
   0},
- {<<"ranch">>,
-  {pkg,<<"ranch">>,<<"1.2.1">>,
-       <<"A6FB992C10F2187B46FFD17CE398DDF8A54F691B81768F9EF5F461EA7E28C762">>},
-  1}].
+ {<<"ranch">>,{pkg,<<"ranch">>,<<"1.2.1">>},1}]}.
+[
+{pkg_hash,[
+ {<<"base64url">>, <<"36A90125F5948E3AFD7BE97662A1504B934DD5DAC78451CA6E9ABF85A10286BE">>},
+ {<<"cowboy">>, <<"A324A8DF9F2316C833A470D918AAF73AE894278B8AA6226CE7A9BF699388F878">>},
+ {<<"cowlib">>, <<"9D769A1D062C9C3AC753096F868CA121E2730B9A377DE23DEC0F7E08B1DF84EE">>},
+ {<<"erljwt">>, <<"AC472C84DADE6430EDB83339ADA278CB1DC8AECBEBCFB7F07C4D530DCC8495CA">>},
+ {<<"jsone">>, <<"6ECFD2C91E16F48E1535743B57D01A42C65D7DD51A8B43E5723B1F79927169A8">>},
+ {<<"ranch">>, <<"A6FB992C10F2187B46FFD17CE398DDF8A54F691B81768F9EF5F461EA7E28C762">>}]}
+].
