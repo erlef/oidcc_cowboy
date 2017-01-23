@@ -100,8 +100,10 @@ handle_return(Req, #state{code = AuthCode,
         UserAgentValid = ((not CheckUserAgent) or IsUserAgent),
         PeerIpValid = ((not CheckPeerIp) or IsPeerIp),
 
-        TokenResult = oidcc:retrieve_and_validate_token(AuthCode, Pkce, Nonce,
-                                                        Provider),
+        Config = #{nonce => Nonce,
+                   pkce => Pkce},
+        TokenResult = oidcc:retrieve_and_validate_token(AuthCode, Provider,
+                                                        Config),
         AgentInfo = create_agent_info(UserAgent, Session),
         IpInfo = create_ip_info(PeerIp, Session),
         CookieInfo = create_cookie_info(CookieData, Session),
@@ -111,6 +113,7 @@ handle_return(Req, #state{code = AuthCode,
                                     CookieValid, CookieInfo)
     of
         {ok, VerifiedToken0} ->
+            io:format("token verified~n"),
             {ok, VerifiedToken} = add_userinfo_if_configured(VerifiedToken0,
                                                              Provider),
             {ok, Req2} = close_session_delete_cookie(Session, Req),
