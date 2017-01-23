@@ -5,27 +5,27 @@
 -export([stop/1]).
 
 start(_, _) ->
-    Id = <<"google">>,
-    Name = <<"Google">>,
-    Description = <<"you know it">>,
-    ClientId = <<"65375832888-m99kcr0vu8qq95h588b1rhi52ei234qo.apps.googleusercontent.com">>,
-    Secret = <<"MEfMXcaQtckJPBctTrAuSQkJ">>,
+    basic_client:start_debug(["oidcc_openid_provider:update_and_get_keys -> return"]),
     ConfigEndpoint = <<"https://accounts.google.com/.well-known/openid-configuration">>,
     LocalEndpoint = <<"http://localhost:8080/oidc">>,
-    oidcc:add_openid_provider(Id, Name, Description, ClientId, Secret, ConfigEndpoint,
-			      LocalEndpoint),
+    Config = #{
+      id => <<"google">>,
+      client_id => <<"65375832888-m99kcr0vu8qq95h588b1rhi52ei234qo.apps.googleusercontent.com">>,
+      client_secret =>  <<"MEfMXcaQtckJPBctTrAuSQkJ">>
+     },
+    oidcc:add_openid_provider(ConfigEndpoint, LocalEndpoint, Config),
     basic_client:init(),
     Dispatch = cowboy_router:compile( [{'_',
-					[
-					 {"/", basic_client_http, []},
-					 {"/oidc", oidcc_cowboy, []},
-					 {"/oidc/return", oidcc_cowboy, []}
-					]}]),
+        				[
+        				 {"/", basic_client_http, []},
+        				 {"/oidc", oidcc_cowboy, []},
+        				 {"/oidc/return", oidcc_cowboy, []}
+        				]}]),
     {ok, _} = cowboy:start_http( http_handler
-			       , 100
-			       , [ {port, 8080} ]
-			       , [{env, [{dispatch, Dispatch}]}]
-			       ),
+        		       , 100
+        		       , [ {port, 8080} ]
+        		       , [{env, [{dispatch, Dispatch}]}]
+        		       ),
     basic_client_sup:start_link().
 
 stop(_) ->
