@@ -5,7 +5,6 @@
 -export([stop/1]).
 
 start(_, _) ->
-    basic_client:start_debug(["oidcc_openid_provider:update_and_get_keys -> return"]),
     ConfigEndpoint = <<"https://accounts.google.com/.well-known/openid-configuration">>,
     LocalEndpoint = <<"http://localhost:8080/oidc">>,
     Config = #{
