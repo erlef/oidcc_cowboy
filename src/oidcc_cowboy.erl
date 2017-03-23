@@ -18,7 +18,8 @@
           referer = undefined,
           client_mod = undefined,
           use_cookie = undefined,
-          cookie_data = undefined
+          cookie_data = undefined,
+          cookies = undefined
          }).
 
 -define(COOKIE, <<"oidcc_session">>).
@@ -84,13 +85,15 @@ handle_return(Req, #state{code = AuthCode,
                           session = Session,
                           user_agent = UserAgent,
                           peer_ip = PeerIp,
-                          cookie_data = CookieData
+                          cookie_data = CookieData,
+                          cookies = Cookies
                          } = State) ->
     {ok, Provider} = oidcc_session:get_provider(Session),
     {ok, ClientModId} = oidcc_session:get_client_mod(Session),
     try
         {ok, Pkce} = oidcc_session:get_pkce(Session),
         {ok, Nonce} = oidcc_session:get_nonce(Session),
+        {ok, Scope} = oidcc_session:get_scopes(Session),
         IsUserAgent = oidcc_session:is_user_agent(UserAgent, Session),
         CheckUserAgent = application:get_env(oidcc, check_user_agent, true),
         IsPeerIp = oidcc_session:is_peer_ip(PeerIp, Session),
@@ -101,7 +104,9 @@ handle_return(Req, #state{code = AuthCode,
         PeerIpValid = ((not CheckPeerIp) or IsPeerIp),
 
         Config = #{nonce => Nonce,
-                   pkce => Pkce},
+                   pkce => Pkce,
+                   scope => Scope
+                  },
         TokenResult = oidcc:retrieve_and_validate_token(AuthCode, Provider,
                                                         Config),
         AgentInfo = create_agent_info(UserAgent, Session),
@@ -113,9 +118,8 @@ handle_return(Req, #state{code = AuthCode,
                                     CookieValid, CookieInfo)
     of
         {ok, VerifiedToken0} ->
-            io:format("token verified~n"),
-            {ok, VerifiedToken} = add_userinfo_if_configured(VerifiedToken0,
-                                                             Provider),
+            {ok, VerifiedToken} = add_configured_info(VerifiedToken0, Provider,
+                                                      Cookies),
             {ok, Req2} = close_session_delete_cookie(Session, Req),
             {ok, UpdateList} = oidcc_client:succeeded(VerifiedToken,
                                                       ClientModId),
@@ -137,16 +141,23 @@ create_cookie_info(CookieSecond, Session) ->
     {ok, CookieFirst} = oidcc_session:get_cookie_data(Session),
     #{first => CookieFirst, second => CookieSecond}.
 
-add_userinfo_if_configured(Token, Provider) ->
+add_configured_info(Token, Provider, Cookies) ->
     GetUserInfo = application:get_env(oidcc, retrieve_userinfo, false),
-    add_userinfo_to_token(GetUserInfo, Token, Provider).
+    AddCookies = application:get_env(oidcc, add_cookies, false),
+    add_info_to_token(GetUserInfo, AddCookies, Token, Provider, Cookies).
 
 
-add_userinfo_to_token(false, Token, _Provider) ->
+
+add_info_to_token(false, false, Token, _Provider, _Cookies) ->
     {ok, Token};
-add_userinfo_to_token(true, Token, Provider) ->
+add_info_to_token(true, AddCookies, Token, Provider, Cookies) ->
     Result = oidcc:retrieve_user_info(Token, Provider),
-    insert_userinfo_in_token(Result, Token).
+    {ok, NewToken} = insert_userinfo_in_token(Result, Token),
+    add_info_to_token(false, AddCookies, NewToken, Provider, Cookies);
+add_info_to_token(AddUserInfo, true, Token, Provider, Cookies) ->
+    NewToken = maps:put(cookies, Cookies, Token),
+    add_info_to_token(AddUserInfo, false, NewToken, Provider, Cookies).
+
 
 
 insert_userinfo_in_token({ok, UserInfo}, Token) ->
@@ -199,7 +210,7 @@ apply_updates([{none} | T], Req) ->
 cookie_update_if_requested(true, Session) ->
     CookieData =  base64url:encode(crypto:strong_rand_bytes(32)),
     ok = oidcc_session:set_cookie_data(CookieData, Session),
-    MaxAge = application:get_env(oidcc, session_max_age, 600),
+    MaxAge = application:get_env(oidcc, session_max_age, 180),
     {cookie, ?COOKIE, CookieData, cookie_opts(MaxAge)};
 cookie_update_if_requested(_, _Session) ->
     {none}.
@@ -237,7 +248,12 @@ extract_args(Req) ->
     {ok, BodyQsList, Req2} = cowboy_req:body_qs(Req1),
     {Headers, Req3} = cowboy_req:headers(Req2),
     {Method, Req4} = cowboy_req:method(Req3),
-    {CookieData, Req5} = cowboy_req:cookie(?COOKIE, Req4),
+    {AllCookies, Req5} = cowboy_req:cookies(Req4),
+    CookieData =  case lists:keyfind(?COOKIE, 1, AllCookies) of
+                      false -> undefined;
+                      {?COOKIE, Data} -> Data
+                  end,
+    Cookies = lists:keydelete(?COOKIE, 1, AllCookies),
     {{PeerIP, _Port}, Req99} = cowboy_req:peer(Req5),
 
     QsMap = create_map_from_proplist(QsList ++ BodyQsList),
@@ -267,7 +283,8 @@ extract_args(Req) ->
                                                error = Error,
                                                state = State,
                                                client_mod = ClientModId,
-                                               cookie_data = CookieData
+                                               cookie_data = CookieData,
+                                               cookies = Cookies
                                               }};
                 {error, Reason} ->
                     Desc = list_to_binary(io_lib:format("session not found: ~p",
