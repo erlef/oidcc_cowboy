@@ -210,7 +210,7 @@ apply_updates([{none} | T], Req) ->
 cookie_update_if_requested(true, Session) ->
     CookieData =  base64url:encode(crypto:strong_rand_bytes(32)),
     ok = oidcc_session:set_cookie_data(CookieData, Session),
-    MaxAge = application:get_env(oidcc, session_max_age, 600),
+    MaxAge = application:get_env(oidcc, session_max_age, 180),
     {cookie, ?COOKIE, CookieData, cookie_opts(MaxAge)};
 cookie_update_if_requested(_, _Session) ->
     {none}.
