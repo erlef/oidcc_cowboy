@@ -4,7 +4,7 @@
  {<<"cowlib">>,{pkg,<<"cowlib">>,<<"1.0.2">>},1},
  {<<"erljwt">>,{pkg,<<"erljwt">>,<<"0.3.2">>},1},
  {<<"jsone">>,{pkg,<<"jsone">>,<<"1.4.0">>},2},
- {<<"oidcc">>,{pkg,<<"oidcc">>,<<"1.1.0">>},0},
+ {<<"oidcc">>,{pkg,<<"oidcc">>,<<"1.2.0">>},0},
  {<<"ranch">>,{pkg,<<"ranch">>,<<"1.3.2">>},1}]}.
 [
 {pkg_hash,[
@@ -13,6 +13,6 @@
  {<<"cowlib">>, <<"9D769A1D062C9C3AC753096F868CA121E2730B9A377DE23DEC0F7E08B1DF84EE">>},
  {<<"erljwt">>, <<"AC472C84DADE6430EDB83339ADA278CB1DC8AECBEBCFB7F07C4D530DCC8495CA">>},
  {<<"jsone">>, <<"6ECFD2C91E16F48E1535743B57D01A42C65D7DD51A8B43E5723B1F79927169A8">>},
- {<<"oidcc">>, <<"8224D76F0D9F7993BAE514E71FEC33285DDFC66E36C980802D8B76F04ECAC7FB">>},
+ {<<"oidcc">>, <<"15A0E7A02922366FD194E417F00C6945A81620B3D96BB7D645B827AC1E4E6522">>},
  {<<"ranch">>, <<"E4965A144DC9FBE70E5C077C65E73C57165416A901BD02EA899CFD95AA890986">>}]}
 ].
