@@ -8,7 +8,6 @@
          {applications, [
                          oidcc_cowboy,
 			 cowboy,
-			 erlydtl,
 			 eper
                         ]},
          {mod, {basic_client_app, []}}

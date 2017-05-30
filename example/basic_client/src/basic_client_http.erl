@@ -24,14 +24,35 @@ init(_, Req, _Opts) ->
     end.
 
 handle(Req, #state{session = Session } = State) ->
-    {ok, Body} = basic_client_dtl:render([{session, Session}]),
-    Status = 200,
     %% clear the cookie again, so after a page reload one can retest it.
     Opts = [{max_age, 0},{http_only, true},{path, <<"/">>}],
     Req2 = cowboy_req:set_resp_cookie(?COOKIE, <<"deleted">>, Opts, Req),
-    Req3 = cowboy_req:set_resp_body(Body, Req2),
-    {ok, Req4} = cowboy_req:reply(Status, Req3),
+    Req3 = cowboy_req:set_resp_body(get_body(Session), Req2),
+    {ok, Req4} = cowboy_req:reply(200, Req3),
     {ok, Req4, State}.
+
+
+get_body(undefined) ->
+" <!DOCTYPE html>
+<html lang=\"en\">
+    <body>
+	   you are not yet logged in, please do so by following
+	   <a href=\"/oidc?provider=google\">going without cookie</a>
+           </br>
+	   you can also login
+	   <a href=\"/oidc?provider=google&use_cookie=true\">with using a cookie</a>
+    </body>
+</html>
+";
+get_body(_) ->
+"<!DOCTYPE html>
+<html lang=\"en\">
+    <body>
+	   you are logged in
+    </body>
+</html>
+".
+
 
 terminate(_Reason, _Req, _State) ->
     ok.
@@ -42,4 +63,3 @@ extract_args(Req) ->
 		  session = Session
 		 },
     {ok, Req2, NewState}.
-
