@@ -18,8 +18,7 @@
           referer = undefined,
           client_mod = undefined,
           use_cookie = undefined,
-          cookie_data = undefined,
-          cookies = undefined
+          cookie_data = undefined
          }).
 
 -define(COOKIE, <<"oidcc_session">>).
@@ -85,8 +84,7 @@ handle_return(Req, #state{code = AuthCode,
                           session = Session,
                           user_agent = UserAgent,
                           peer_ip = PeerIp,
-                          cookie_data = CookieData,
-                          cookies = Cookies
+                          cookie_data = CookieData
                          } = State) ->
     {ok, Provider} = oidcc_session:get_provider(Session),
     {ok, ClientModId} = oidcc_session:get_client_mod(Session),
@@ -120,8 +118,9 @@ handle_return(Req, #state{code = AuthCode,
         {ok, VerifiedToken0} ->
             {ok, VerifiedToken} = add_configured_info(VerifiedToken0, Provider),
             {ok, Req2} = close_session_delete_cookie(Session, Req),
+            EnvMap = #{req => Req2},
             {ok, UpdateList} = oidcc_client:succeeded(VerifiedToken,
-                                                      ClientModId),
+                                                      ClientModId, EnvMap),
             {ok, Req3} = apply_updates(UpdateList, Req2),
             {ok, Req3, State}
     catch _:Error ->
@@ -173,23 +172,27 @@ check_token_and_fingerprint(_, _, _, false, IpInfo, _, _) ->
 check_token_and_fingerprint(_, _, _, _, _, false, CookieInfo) ->
     throw({bad_cookie, CookieInfo}).
 
-
-handle_fail(Error, Desc, Req, #state{
-                                 session = undefined
-                                } = State) ->
-    {ok, UpdateList} = oidcc_client:failed(Error, Desc, default),
-    {ok, Req2} = apply_updates(UpdateList, Req),
-    {ok, Req2, State};
 handle_fail(Error, Desc, Req, #state{
                                  session = Session
                                 } = State) ->
-    {ok, ClientModId} = oidcc_session:get_client_mod(Session),
+    ClientModId = get_client_mod(Session),
     {ok, Req2} = close_session_delete_cookie(Session, Req),
-    {ok, UpdateList} = oidcc_client:failed(Error, Desc, ClientModId),
+    EnvMap = #{req => Req2},
+    {ok, UpdateList} = oidcc_client:failed(Error, Desc, ClientModId, EnvMap),
     {ok, Req3} = apply_updates(UpdateList, Req2),
     {ok, Req3, State}.
 
+get_client_mod(undefined) ->
+    default;
+get_client_mod(Session) ->
+    {ok, ClientModId} = oidcc_session:get_client_mod(Session),
+    ClientModId.
+
+
+
 apply_updates([], Req) ->
+    {ok, Req};
+apply_updates([{raw, Req}], _) ->
     {ok, Req};
 apply_updates([{redirect, Url}|T], Req) ->
     Header = [{<<"location">>, Url}],
@@ -243,12 +246,11 @@ extract_args(Req) ->
     {ok, BodyQsList, Req2} = cowboy_req:body_qs(Req1),
     {Headers, Req3} = cowboy_req:headers(Req2),
     {Method, Req4} = cowboy_req:method(Req3),
-    {AllCookies, Req5} = cowboy_req:cookies(Req4),
-    CookieData =  case lists:keyfind(?COOKIE, 1, AllCookies) of
+    {Cookies, Req5} = cowboy_req:cookies(Req4),
+    CookieData =  case lists:keyfind(?COOKIE, 1, Cookies) of
                       false -> undefined;
                       {?COOKIE, Data} -> Data
                   end,
-    Cookies = lists:keydelete(?COOKIE, 1, AllCookies),
     {{PeerIP, _Port}, Req99} = cowboy_req:peer(Req5),
 
     QsMap = create_map_from_proplist(QsList ++ BodyQsList),
@@ -278,8 +280,7 @@ extract_args(Req) ->
                                                error = Error,
                                                state = State,
                                                client_mod = ClientModId,
-                                               cookie_data = CookieData,
-                                               cookies = Cookies
+                                               cookie_data = CookieData
                                               }};
                 {error, Reason} ->
                     Desc = list_to_binary(io_lib:format("session not found: ~p",
