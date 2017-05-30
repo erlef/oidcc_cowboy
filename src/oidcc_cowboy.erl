@@ -118,8 +118,7 @@ handle_return(Req, #state{code = AuthCode,
                                     CookieValid, CookieInfo)
     of
         {ok, VerifiedToken0} ->
-            {ok, VerifiedToken} = add_configured_info(VerifiedToken0, Provider,
-                                                      Cookies),
+            {ok, VerifiedToken} = add_configured_info(VerifiedToken0, Provider),
             {ok, Req2} = close_session_delete_cookie(Session, Req),
             {ok, UpdateList} = oidcc_client:succeeded(VerifiedToken,
                                                       ClientModId),
@@ -141,22 +140,18 @@ create_cookie_info(CookieSecond, Session) ->
     {ok, CookieFirst} = oidcc_session:get_cookie_data(Session),
     #{first => CookieFirst, second => CookieSecond}.
 
-add_configured_info(Token, Provider, Cookies) ->
+add_configured_info(Token, Provider) ->
     GetUserInfo = application:get_env(oidcc, retrieve_userinfo, false),
-    AddCookies = application:get_env(oidcc, add_cookies, false),
-    add_info_to_token(GetUserInfo, AddCookies, Token, Provider, Cookies).
+    add_info_to_token(GetUserInfo, Token, Provider).
 
 
 
-add_info_to_token(false, false, Token, _Provider, _Cookies) ->
+add_info_to_token(false, Token, _Provider) ->
     {ok, Token};
-add_info_to_token(true, AddCookies, Token, Provider, Cookies) ->
+add_info_to_token(true, Token, Provider) ->
     Result = oidcc:retrieve_user_info(Token, Provider),
     {ok, NewToken} = insert_userinfo_in_token(Result, Token),
-    add_info_to_token(false, AddCookies, NewToken, Provider, Cookies);
-add_info_to_token(AddUserInfo, true, Token, Provider, Cookies) ->
-    NewToken = maps:put(cookies, Cookies, Token),
-    add_info_to_token(AddUserInfo, false, NewToken, Provider, Cookies).
+    add_info_to_token(false, NewToken, Provider).
 
 
 

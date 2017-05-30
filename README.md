@@ -10,6 +10,5 @@ Cowboy callback module for easy integration of OpenId Connect, using [oidcc](htt
 | use_cookie | Put a cookie into the browser to add another layer of security | boolean (false) |
 | secure_cookie | Add the 'secure' option to the cookie, should be used on SSL. | boolean (false) |
 | session_max_age | The maximum duration of a login session in seconds | integer (180) |
-| add_cookies | Wether cookies targeted at the server should be passed on login. | boolean (false) |
 
 All settings must be done in the 'oidcc' environment.
