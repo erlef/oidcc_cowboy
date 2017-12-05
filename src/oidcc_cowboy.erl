@@ -275,8 +275,8 @@ redirect_or_login(undefined, QsMap, Req, State) ->
     perform_login(QsMap, Req, State) ;
 redirect_or_login(bad_provider, _QsMap, Req, State) ->
     create_bad_provider_error(Req, State);
-redirect_or_login(provider_not_ready, _QsMap, Req, State) ->
-    create_provider_not_ready_error(Req, State);
+redirect_or_login({provider_not_ready, Id}, _QsMap, Req, State) ->
+    create_provider_not_ready_error(Id, Req, State);
 redirect_or_login(ProviderId, QsMap, Req, State) ->
     redirect_user_to_provider(ProviderId, QsMap, Req, State).
 
@@ -284,7 +284,8 @@ redirect_or_login(ProviderId, QsMap, Req, State) ->
 perform_login(QsMap, Req, State) ->
     <<"GET">> = maps:get(req_method, QsMap, undefined),
     SessionId = maps:get(state, QsMap, undefined),
-    handle_session_id_at_login(SessionId, QsMap, Req, State).
+    MaybeSession = oidcc_session_mgr:get_session(SessionId),
+    handle_session_id_at_login(MaybeSession, QsMap, Req, State).
 
 handle_session_id_at_login({ok, Session}, QsMap, Req, State) ->
     CookieData = maps:get(req_cookie_data, QsMap, <<>>),
@@ -311,8 +312,8 @@ create_bad_provider_error(Req, State) ->
     {ok, Req, State#state{request_type=bad_request, error = Desc}}.
 
 
-create_provider_not_ready_error(Req, State) ->
-    Desc = <<"provider not ready">>,
+create_provider_not_ready_error(Id, Req, State) ->
+    Desc = list_to_binary(io_lib:format("provider ~p not ready", [Id])),
     {ok, Req, State#state{request_type=bad_request, error = Desc}}.
 
 
@@ -332,7 +333,7 @@ validate_provider(ProviderId) ->
         {ok, #{ready := true} } ->
             ProviderId;
         {ok, #{ready := false} } ->
-            provider_not_ready;
+            {provider_not_ready, ProviderId};
         _ ->
             bad_provider
     end.
