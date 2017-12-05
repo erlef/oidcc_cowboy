@@ -253,8 +253,11 @@ extract_args(Req) ->
                   end,
     {{PeerIP, _Port}, Req99} = cowboy_req:peer(Req5),
 
-    QsMap = create_map_from_proplist(QsList ++ BodyQsList),
-    SessionId = maps:get(state, QsMap, undefined),
+    QsUpdate = #{req_method => Method,
+                 req_cookie_data => CookieData
+                },
+    QsMap = maps:merge(create_map_from_proplist(QsList ++ BodyQsList),
+                       QsUpdate),
 
     UserAgent = get_header(<<"user-agent">>, Headers),
     Referer = get_header(<<"referer">>, Headers),
@@ -265,49 +268,71 @@ extract_args(Req) ->
                  },
     ProviderId0  = maps:get(provider, QsMap, undefined),
     ProviderId = validate_provider(ProviderId0),
-    case ProviderId of
-        undefined ->
-            Method = <<"GET">>,
-            case oidcc_session_mgr:get_session(SessionId) of
-                {ok, Session} ->
-                    Code = maps:get(code, QsMap, undefined),
-                    Error = maps:get(error, QsMap, undefined),
-                    State = maps:get(state, QsMap, undefined),
-                    ClientModId = maps:get(client_mod, QsMap, undefined),
-                    {ok, Req99, NewState#state{request_type=return,
-                                               session = Session,
-                                               code = Code,
-                                               error = Error,
-                                               state = State,
-                                               client_mod = ClientModId,
-                                               cookie_data = CookieData
-                                              }};
-                {error, Reason} ->
-                    Desc = list_to_binary(io_lib:format("session not found: ~p",
-                                                        [Reason])),
-                    {ok, Req99, NewState#state{request_type=session_not_found,
-                                               error = Desc}}
-            end;
-        bad_provider ->
-            Desc = <<"unknown provider id">>,
-            {ok, Req99, NewState#state{request_type=bad_request,
-                                       error = Desc
-                                      }};
-        ProviderId ->
-            {ok, Session} = oidcc_session_mgr:new_session(ProviderId),
-            CookieDefault = application:get_env(oidcc, use_cookie, false),
-            UseCookie = maps:is_key(use_cookie, QsMap) or CookieDefault,
-            {ok, Req99, NewState#state{request_type = redirect,
-                                       session = Session,
-                                       use_cookie = UseCookie}}
-    end.
+    redirect_or_login(ProviderId, QsMap, Req99, NewState).
+
+
+redirect_or_login(undefined, QsMap, Req, State) ->
+    perform_login(QsMap, Req, State) ;
+redirect_or_login(bad_provider, _QsMap, Req, State) ->
+    create_bad_provider_error(Req, State);
+redirect_or_login(provider_not_ready, _QsMap, Req, State) ->
+    create_provider_not_ready_error(Req, State);
+redirect_or_login(ProviderId, QsMap, Req, State) ->
+    redirect_user_to_provider(ProviderId, QsMap, Req, State).
+
+
+perform_login(QsMap, Req, State) ->
+    <<"GET">> = maps:get(req_method, QsMap, undefined),
+    SessionId = maps:get(state, QsMap, undefined),
+    handle_session_id_at_login(SessionId, QsMap, Req, State).
+
+handle_session_id_at_login({ok, Session}, QsMap, Req, State) ->
+    CookieData = maps:get(req_cookie_data, QsMap, <<>>),
+    Code = maps:get(code, QsMap, undefined),
+    Error = maps:get(error, QsMap, undefined),
+    State = maps:get(state, QsMap, undefined),
+    ClientModId = maps:get(client_mod, QsMap, undefined),
+    {ok, Req, State#state{request_type=return,
+                          session = Session,
+                          code = Code,
+                          error = Error,
+                          state = State,
+                          client_mod = ClientModId,
+                          cookie_data = CookieData
+                         }};
+handle_session_id_at_login({error, Reason}, _QsMap, Req, State) ->
+    Desc = list_to_binary(io_lib:format("session not found: ~p", [Reason])),
+    {ok, Req, State#state{request_type=session_not_found, error = Desc}}.
+
+
+
+create_bad_provider_error(Req, State) ->
+    Desc = <<"unknown provider id">>,
+    {ok, Req, State#state{request_type=bad_request, error = Desc}}.
+
+
+create_provider_not_ready_error(Req, State) ->
+    Desc = <<"provider not ready">>,
+    {ok, Req, State#state{request_type=bad_request, error = Desc}}.
+
+
+redirect_user_to_provider(ProviderId, QsMap, Req, State) ->
+    {ok, Session} = oidcc_session_mgr:new_session(ProviderId),
+    CookieDefault = application:get_env(oidcc, use_cookie, false),
+    UseCookie = maps:is_key(use_cookie, QsMap) or CookieDefault,
+    {ok, Req, State#state{request_type = redirect, session = Session,
+                          use_cookie = UseCookie}}.
+
+
 
 validate_provider(undefined) ->
     undefined;
 validate_provider(ProviderId) ->
     case oidcc:get_openid_provider_info(ProviderId) of
-        {ok, _ } ->
+        {ok, #{ready := true} } ->
             ProviderId;
+        {ok, #{ready := false} } ->
+            provider_not_ready;
         _ ->
             bad_provider
     end.
