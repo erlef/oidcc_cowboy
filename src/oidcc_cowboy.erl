@@ -291,13 +291,13 @@ handle_session_id_at_login({ok, Session}, QsMap, Req, State) ->
     CookieData = maps:get(req_cookie_data, QsMap, <<>>),
     Code = maps:get(code, QsMap, undefined),
     Error = maps:get(error, QsMap, undefined),
-    State = maps:get(state, QsMap, undefined),
+    ReqState = maps:get(state, QsMap, undefined),
     ClientModId = maps:get(client_mod, QsMap, undefined),
     {ok, Req, State#state{request_type=return,
                           session = Session,
                           code = Code,
                           error = Error,
-                          state = State,
+                          state = ReqState,
                           client_mod = ClientModId,
                           cookie_data = CookieData
                          }};
