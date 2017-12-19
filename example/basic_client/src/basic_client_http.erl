@@ -41,6 +41,9 @@ get_body(undefined) ->
            </br>
 	   you can also login
 	   <a href=\"/oidc?provider=google&use_cookie=true\">with using a cookie</a>
+           </br>
+	   or use the url_extension
+	   <a href=\"/oidc?provider=google&url_extension=eyJvdGhlcmtleSI6ImltcG9ydGFudCIsInByb3ZpZGVyX2hpbnQiOiJ0ZXN0aW5nIn0\">with extension</a>
     </body>
 </html>
 ";
