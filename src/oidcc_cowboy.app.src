@@ -4,10 +4,12 @@
          {vsn, "semver"},
          {modules, []},
          {registered, []},
-         {applications, [
-                        oidcc,
-                        cowboy
-                        ]},
+                {applications, [
+                                oidcc,
+                                base64url,
+                                jsone,
+                                cowboy
+                               ]},
          {maintainers, ["Bas Wegh"]},
          {licenses, ["Apache 2.0"]},
          {links, [{"GitHub","https://github.com/indigo-dc/oidcc_cowboy"}]}
