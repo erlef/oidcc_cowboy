@@ -14,6 +14,7 @@
 
           session = undefined,
           peer_ip = undefined,
+          url_extension = #{},
           user_agent = undefined,
           referer = undefined,
           client_mod = undefined,
@@ -66,12 +67,13 @@ handle_redirect(#state{
                    user_agent = UserAgent,
                    peer_ip = PeerIp,
                    client_mod = ClientModId,
-                   use_cookie = UseCookie
+                   use_cookie = UseCookie,
+                   url_extension = UrlExt
                   } = State, Req) ->
     ok = oidcc_session:set_user_agent(UserAgent, Session),
     ok = oidcc_session:set_peer_ip(PeerIp, Session),
     ok = oidcc_session:set_client_mod(ClientModId, Session),
-    {ok, Url} = oidcc:create_redirect_for_session(Session),
+    {ok, Url} = oidcc:create_redirect_for_session(Session, UrlExt),
     CookieUpdate = cookie_update_if_requested(UseCookie, Session),
     Redirect = {redirect, Url},
     Updates = [CookieUpdate, Redirect],
@@ -321,8 +323,25 @@ redirect_user_to_provider(ProviderId, QsMap, Req, State) ->
     {ok, Session} = oidcc_session_mgr:new_session(ProviderId),
     CookieDefault = application:get_env(oidcc, use_cookie, false),
     UseCookie = maps:is_key(use_cookie, QsMap) or CookieDefault,
+    UrlExtensionData = maps:get(url_extension, QsMap, undefined),
+    UrlExt = parse_url_extension(UrlExtensionData),
     {ok, Req, State#state{request_type = redirect, session = Session,
-                          use_cookie = UseCookie}}.
+                          use_cookie = UseCookie, url_extension = UrlExt }}.
+
+
+parse_url_extension(undefined) ->
+    #{};
+parse_url_extension(Data) ->
+    try
+        Binary = base64url:decode(Data),
+        {ok, Map, _} = jsone:try_decode(Binary, [{object_format, map},
+                                                 {keys, binary}]),
+        true = is_map(Map),
+        Map
+    catch _:_ ->
+            #{}
+    end.
+
 
 
 
@@ -344,6 +363,7 @@ validate_provider(ProviderId) ->
                     {<<"state">>, state},
                     {<<"provider">>, provider},
                     {<<"client_mod">>, client_mod},
+                    {<<"url_extension">>, url_extension},
                     {<<"use_cookie">>, use_cookie}
                    ]).
 
