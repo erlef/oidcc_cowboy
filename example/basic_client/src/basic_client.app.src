@@ -1,14 +1,13 @@
 {application,
  basic_client, [
-         {description, "an example"},
-         {vsn, "git"},
-         {id, "git"},
-         {modules, []},
-         {registered, []},
-         {applications, [
-                         oidcc_cowboy,
-			 cowboy,
-			 eper
-                        ]},
-         {mod, {basic_client_app, []}}
-        ]}.
+                {description, "an example"},
+                {vsn, "git"},
+                {id, "git"},
+                {modules, []},
+                {registered, []},
+                {applications, [
+                                oidcc_cowboy,
+                                cowboy
+                               ]},
+                {mod, {basic_client_app, []}}
+               ]}.

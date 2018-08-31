@@ -24,7 +24,7 @@ login_succeeded(Token, EnvMap) ->
     Path = <<"/">>,
     Updates = [
                {redirect, Path},
-               {cookie, CookieName, CookieData, [{max_age, 30}]}
+               {cookie, CookieName, CookieData, #{max_age => 30}}
               ],
     {ok, Updates}.
 
