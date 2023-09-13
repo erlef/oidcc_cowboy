@@ -1,16 +1,20 @@
-{application,
- oidcc_cowboy, [
-         {description, "OpenId Connect cowboy handler"},
-         {vsn, "semver"},
-         {modules, []},
-         {registered, []},
-                {applications, [
-                                oidcc,
-                                base64url,
-                                jsone,
-                                cowboy
-                               ]},
-         {maintainers, ["Bas Wegh"]},
-         {licenses, ["Apache 2.0"]},
-         {links, [{"GitHub","https://github.com/indigo-dc/oidcc_cowboy"}]}
-        ]}.
+{application, oidcc_cowboy, [
+    {description, "OpenId Connect cowboy handler"},
+    {vsn, "2.0.0-dev"},
+    {modules, []},
+    {registered, []},
+    {applications, [
+        kernel,
+        stdlib,
+        oidcc,
+        public_key,
+        ssl,
+        jose,
+        ranch,
+        cowboy,
+        cowboy_session
+    ]},
+    {maintainers, ["Bas Wegh", "Jonatan Männchen"]},
+    {licenses, ["Apache 2.0"]},
+    {links, [{"GitHub", "https://github.com/indigo-dc/oidcc_cowboy"}]}
+]}.

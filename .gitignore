@@ -1,14 +1,33 @@
-.eunit
-deps
-*.o
-*.beam
-*.plt
-erl_crash.dump
-ebin
-rel/example_project
-.concrete/DEV_MODE
-.rebar
+# The directory Rebar will write compiled artifacts to.
 _build/
+*.beam
+
+# If you run "rebar3 eunit" / "rebar3 ct", coverage assets end up here.
+cover/
+*.coverdata
+
+# Where 3rd-party dependencies like ExDoc output generated docs.
+doc/
+
+# Ignore .fetch files in case you like to edit your project deps locally.
+/.fetch
+
+# If the VM or Rebar3 crashes, it generates a dump, let's ignore it too.
+erl_crash.dump
+rebar3.crashdump
+
+# Ignore package tarball (built via "rebar3 hex build").
+oidcc_cowboy-*.tar
+
+# Ignore Package Lock Files (not relevant for library)
+rebar.lock
+
+# Other Rebar Files
+ebin/
+log/
+relx
+_rel/
+elvis
+xrefr
 *~
 *#
-example/basic_client/rebar.lock
