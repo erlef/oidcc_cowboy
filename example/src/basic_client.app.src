@@ -1,0 +1,16 @@
+{application, basic_client, [
+    {description, "an example"},
+    {vsn, "git"},
+    {id, "git"},
+    {modules, []},
+    {registered, []},
+    {applications, [
+        kernel,
+        stdlib,
+        oidcc_cowboy,
+        cowboy,
+        jsx,
+        sasl
+    ]},
+    {mod, {basic_client_app, []}}
+]}.

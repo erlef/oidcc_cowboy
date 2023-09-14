@@ -1,0 +1,220 @@
+on:
+  workflow_call:
+    inputs:
+      otpVersion:
+        required: true
+        type: string
+      rebarVersion:
+        required: true
+        type: string
+
+name: "Test"
+
+env:
+  ERL_AFLAGS: "-enable-feature all"
+
+jobs:
+  rebar_format:
+    name: rebar3 fmt
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        id: setupBEAM
+        with:
+          otp-version: ${{ inputs.otpVersion }}
+          rebar3-version: ${{ inputs.rebarVersion }}
+      - uses: actions/cache@v3
+        with:
+          path: _build
+          key: rebar_format-${{ runner.os }}-${{ steps.setupBEAM.outputs.otp-version }}-${{ hashFiles('rebar.config') }}
+          restore-keys: |
+            rebar_format-${{ runner.os }}-${{ steps.setupBEAM.outputs.otp-version }}-
+      - run: rebar3 fmt --check
+
+  eunit:
+    name: rebar3 eunit
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - otp: "${{ inputs.otpVersion }}"
+          - otp: "master"
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        id: setupBEAM
+        with:
+          otp-version: ${{ matrix.otp }}
+          rebar3-version: ${{ inputs.rebarVersion }}
+      - uses: actions/cache@v3
+        with:
+          path: _build
+          key: eunit-${{ runner.os }}-${{ steps.setupBEAM.outputs.otp-version }}-${{ hashFiles('rebar.config') }}
+          restore-keys: |
+            eunit-${{ runner.os }}-${{ steps.setupBEAM.outputs.otp-version }}-
+      - run: rebar3 eunit --cover
+      - uses: actions/upload-artifact@v3
+        with:
+          name: eunit-coverage
+          path: _build/test/cover/eunit.coverdata
+
+  conformance:
+    name: rebar3 ct
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        id: setupBEAM
+        with:
+          otp-version: ${{ inputs.otpVersion }}
+          rebar3-version: ${{ inputs.rebarVersion }}
+      - uses: actions/cache@v3
+        with:
+          path: _build
+          key: ct-${{ runner.os }}-${{ steps.setupBEAM.outputs.otp-version }}-${{ hashFiles('rebar.config') }}
+          restore-keys: |
+            ct-${{ runner.os }}-${{ steps.setupBEAM.outputs.otp-version }}-
+      - run: rebar3 ct --cover
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ct-coverage
+          path: _build/test/cover/ct.coverdata
+
+  coverage:
+    name: rebar3 cover
+
+    runs-on: ubuntu-latest
+
+    needs: ["eunit", "conformance"]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        id: setupBEAM
+        with:
+          otp-version: ${{ inputs.otpVersion }}
+          rebar3-version: ${{ inputs.rebarVersion }}
+      - uses: actions/cache@v3
+        with:
+          path: _build
+          key: cover-${{ runner.os }}-${{ steps.setupBEAM.outputs.otp-version }}-${{ hashFiles('rebar.config') }}
+          restore-keys: |
+            cover-${{ runner.os }}-${{ steps.setupBEAM.outputs.otp-version }}-
+      - uses: actions/download-artifact@v3
+        with:
+          name: ct-coverage
+          path: _build/test/cover/
+      - uses: actions/download-artifact@v3
+        with:
+          name: eunit-coverage
+          path: _build/test/cover/
+      - run: rebar3 cover
+      - uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: _build/test/cover/
+
+  coveralls:
+    name: rebar3 coveralls send
+
+    runs-on: ubuntu-latest
+
+    needs: ["eunit", "conformance"]
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        id: setupBEAM
+        with:
+          otp-version: ${{ inputs.otpVersion }}
+          rebar3-version: ${{ inputs.rebarVersion }}
+      - uses: actions/cache@v3
+        with:
+          path: _build
+          key: cover-${{ runner.os }}-${{ steps.setupBEAM.outputs.otp-version }}-${{ hashFiles('rebar.config') }}
+          restore-keys: |
+            cover-${{ runner.os }}-${{ steps.setupBEAM.outputs.otp-version }}-
+      - uses: actions/download-artifact@v3
+        with:
+          name: ct-coverage
+          path: _build/test/cover/
+      - uses: actions/download-artifact@v3
+        with:
+          name: eunit-coverage
+          path: _build/test/cover/
+      - uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: _build/test/cover/
+      - run: rebar3 as test coveralls send
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  lint:
+    name: rebar3 lint
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        id: setupBEAM
+        with:
+          otp-version: ${{ inputs.otpVersion }}
+          rebar3-version: ${{ inputs.rebarVersion }}
+      - uses: actions/cache@v3
+        with:
+          path: _build
+          key: lint-${{ runner.os }}-${{ steps.setupBEAM.outputs.otp-version }}-${{ hashFiles('rebar.config') }}
+          restore-keys: |
+            lint-${{ runner.os }}-${{ steps.setupBEAM.outputs.otp-version }}-
+      - run: rebar3 lint
+
+  dialyzer:
+    name: rebar3 dialyzer
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        id: setupBEAM
+        with:
+          otp-version: ${{ inputs.otpVersion }}
+          rebar3-version: ${{ inputs.rebarVersion }}
+      - uses: actions/cache@v3
+        with:
+          path: _build
+          key: dialyzer-${{ runner.os }}-${{ steps.setupBEAM.outputs.otp-version }}-${{ hashFiles('rebar.config') }}
+          restore-keys: |
+            dialyzer-${{ runner.os }}-${{ steps.setupBEAM.outputs.otp-version }}-
+      - run: rebar3 dialyzer
+
+  hank:
+    name: rebar3 hank
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: erlef/setup-beam@v1
+        id: setupBEAM
+        with:
+          otp-version: ${{ inputs.otpVersion }}
+          rebar3-version: ${{ inputs.rebarVersion }}
+      - uses: actions/cache@v3
+        with:
+          path: _build
+          key: hank-${{ runner.os }}-${{ steps.setupBEAM.outputs.otp-version }}-${{ hashFiles('rebar.config') }}
+          restore-keys: |
+            hank-${{ runner.os }}-${{ steps.setupBEAM.outputs.otp-version }}-
+      - run: rebar3 hank
