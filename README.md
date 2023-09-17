@@ -1,3 +1,5 @@
+<img align="left" src="https://raw.githubusercontent.com/Erlang-Openid/oidcc_cowboy/main/assets/logo.svg" width="150px" style="margin-right: 15px">
+
 # oidcc_cowboy
 
 [![EEF Security WG project](https://img.shields.io/badge/EEF-Security-black)](https://github.com/erlef/security-wg)
@@ -9,6 +11,25 @@
 [![Coverage Status](https://coveralls.io/repos/github/Erlang-Openid/oidcc_cowboy/badge.svg?branch=main)](https://coveralls.io/github/Erlang-Openid/oidcc_cowboy?branch=main)
 
 Cowboy callback module for easy integration of OpenId Connect, using [oidcc](https://github.com/erlef/oidcc).
+
+<!-- TODO: Uncomment after certification -->
+<!--
+OpenID Certified by Jonatan Männchen at the Erlang Ecosystem Foundation for the
+basic and configuration profile of the OpenID Connect protocol. For details,
+check the [Conformance Documentation](https://github.com/erlef/oidcc/blob/main/conformance/HOWTO.md).
+
+![OpenID Connect Certified Logo](https://raw.githubusercontent.com/Erlang-Openid/oidcc_cowboy/main/assets/certified.svg)
+-->
+
+<picture style="margin-right: 15px; float: left">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Erlang-Openid/oidcc_cowboy/main/assets/erlef-logo-dark.svg" width="115px" align="left">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Erlang-Openid/oidcc_cowboy/main/assets/erlef-logo-light.svg" width="115px" align="left">
+  <img alt="Erlang Ecosystem Foundation Logo" src="https://raw.githubusercontent.com/Erlang-Openid/oidcc_cowboy/main/assets/erlef-logo-light.svg" width="115px" align="left">
+</picture>
+
+The refactoring for `v2` and the certification is funded as an
+[Erlang Ecosystem Foundation](https://erlef.org/) stipend entered by the
+[Security Working Group](https://erlef.org/wg/security).
 
 ## Usage
 
