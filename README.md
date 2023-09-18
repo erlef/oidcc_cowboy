@@ -33,6 +33,8 @@ The refactoring for `v2` and the certification is funded as an
 
 ## Usage
 
+### Code Flow
+
 ```erlang
 -module(basic_client_app).
 -behaviour(application).
@@ -62,6 +64,48 @@ start(_, _) ->
         env => #{dispatch => Dispatch}
     }),
     basic_client_sup:start_link().
+
+stop(_) ->
+    ok.
+```
+
+### Authorization Header Checking
+
+```erlang
+-module(api_client_app).
+-behaviour(application).
+
+-export([start/2]).
+-export([stop/1]).
+
+start(_, _) ->
+    OidccCowboyOpts = #{
+        provider => config_provider_gen_server_name,
+        client_id => <<"client_id">>,
+        client_secret => <<"client_secret">>
+    },
+    Dispatch = cowboy_router:compile([
+        {'_', [
+            {"/", api_client, #{}}
+        ]}
+    ]),
+    {ok, _} = cowboy:start_clear(http, [{port, 8080}], #{
+        env => #{
+            dispatch => Dispatch,
+            oidcc_cowboy_load_userinfo => OidccCowboyOpts,
+            oidcc_cowboy_introspect_token => OidccCowboyOpts,
+            oidcc_cowboy_validate_jwt_token => OidccCowboyOpts,
+        },
+        middlewares => [
+            oidcc_cowboy_extract_authorization,
+            oidcc_cowboy_load_userinfo, %% Check Token via Userinfo
+            oidcc_cowboy_introspect_token, %% Check Token via Introspection
+            oidcc_cowboy_validate_jwt_token, %% Check Token via JWT validation
+            cowboy_router,
+            cowboy_handler
+        ]
+    }),
+    api_client_sup:start_link().
 
 stop(_) ->
     ok.
