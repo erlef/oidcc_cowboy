@@ -1,6 +1,6 @@
 {application, oidcc_cowboy, [
     {description, "OpenId Connect cowboy handler"},
-    {vsn, "2.0.0-alpha.1"},
+    {vsn, "2.0.0-alpha.2"},
     {modules, []},
     {registered, []},
     {applications, [
