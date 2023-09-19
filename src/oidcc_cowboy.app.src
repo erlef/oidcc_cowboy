@@ -15,5 +15,6 @@
         cowboy_session
     ]},
     {licenses, ["Apache-2.0"]},
-    {links, [{"GitHub", "https://github.com/indigo-dc/oidcc_cowboy"}]}
+    {links, [{"GitHub", "https://github.com/indigo-dc/oidcc_cowboy"}]},
+    {exclude_paths, ["priv/test"]}
 ]}.
