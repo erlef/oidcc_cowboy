@@ -37,7 +37,10 @@ successful_test() ->
         }),
 
     Req1 = set_session(Req, oidcc_cowboy, #{
-        peer_ip => {127, 0, 0, 1}, useragent => <<"useragent">>, nonce => <<"nonce">>
+        peer_ip => {127, 0, 0, 1},
+        useragent => <<"useragent">>,
+        nonce => <<"nonce">>,
+        pkce_verifier => <<"pkce_verifier">>
     }),
 
     ?assertMatch(
@@ -79,7 +82,10 @@ ip_mismatch_test() ->
         }),
 
     Req1 = set_session(Req, oidcc_cowboy, #{
-        peer_ip => {127, 0, 0, 2}, useragent => <<"useragent">>, nonce => <<"nonce">>
+        peer_ip => {127, 0, 0, 2},
+        useragent => <<"useragent">>,
+        nonce => <<"nonce">>,
+        pkce_verifier => <<"pkce_verifier">>
     }),
 
     ?assertMatch(
@@ -179,7 +185,10 @@ passes_none_alg_with_userinfo_test() ->
         }),
 
     Req1 = set_session(Req, oidcc_cowboy, #{
-        peer_ip => {127, 0, 0, 1}, useragent => <<"useragent">>, nonce => <<"nonce">>
+        peer_ip => {127, 0, 0, 1},
+        useragent => <<"useragent">>,
+        nonce => <<"nonce">>,
+        pkce_verifier => <<"pkce_verifier">>
     }),
 
     ?assertMatch(
@@ -234,7 +243,10 @@ fails_none_alg_without_userinfo_test() ->
         }),
 
     Req1 = set_session(Req, oidcc_cowboy, #{
-        peer_ip => {127, 0, 0, 1}, useragent => <<"useragent">>, nonce => <<"nonce">>
+        peer_ip => {127, 0, 0, 1},
+        useragent => <<"useragent">>,
+        nonce => <<"nonce">>,
+        pkce_verifier => <<"pkce_verifier">>
     }),
 
     ?assertMatch(
@@ -279,7 +291,10 @@ useragent_mismatch_test() ->
         }),
 
     Req1 = set_session(Req, oidcc_cowboy, #{
-        peer_ip => {127, 0, 0, 1}, useragent => <<"other useragent">>, nonce => <<"nonce">>
+        peer_ip => {127, 0, 0, 1},
+        useragent => <<"other useragent">>,
+        nonce => <<"nonce">>,
+        pkce_verifier => <<"pkce_verifier">>
     }),
 
     ?assertMatch(

@@ -17,7 +17,10 @@ successful_test() ->
     end,
     ok = meck:expect(oidcc, create_redirect_url, CreateRedirectUrlFun),
 
-    #{streamid := Ref} = Req = make_req(),
+    #{streamid := Ref} =
+        Req = make_req(#{
+            qs => uri_string:compose_query([{<<"state">>, <<"state">>}])
+        }),
 
     ?assertMatch(
         {ok, #{has_sent_resp := true}, _},
@@ -94,10 +97,16 @@ error_test() ->
 
     ok.
 
-make_req() ->
-    #{
-        headers => #{<<"user-agent">> => <<"useragent">>},
-        peer => {{127, 0, 0, 1}, 8080},
-        pid => self(),
-        streamid => make_ref()
-    }.
+make_req() -> make_req(#{}).
+
+make_req(Default) ->
+    maps:merge(
+        #{
+            qs => <<"">>,
+            headers => #{<<"user-agent">> => <<"useragent">>},
+            peer => {{127, 0, 0, 1}, 8080},
+            pid => self(),
+            streamid => make_ref()
+        },
+        Default
+    ).
