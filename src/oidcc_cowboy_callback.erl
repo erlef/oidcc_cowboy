@@ -108,13 +108,22 @@ init(Req, Opts) ->
     RetrieveUserinfo = maps:get(retrieve_userinfo, Opts, true),
 
     HandleSuccess = maps:get(handle_success, Opts),
-    HandleFailure = maps:get(handle_failure, Opts, fun(FailureReq, _Reason) -> cowboy_req:reply(500, #{}, <<"internal error">>, FailureReq) end),
+    HandleFailure = maps:get(handle_failure, Opts, fun(FailureReq, _Reason) ->
+        cowboy_req:reply(500, #{}, <<"internal error">>, FailureReq)
+    end),
 
     {#{
         useragent := Useragent,
         peer_ip := PeerIp,
-        nonce := Nonce}, Req2} =
-            cowboy_session:get(oidcc_cowboy, #{useragent => undefined, peer_ip => undefined, nonce => any}, Req1),
+        nonce := Nonce,
+        pkce_verifier := PkceVerifier
+    }, Req2} =
+        cowboy_session:get(oidcc_cowboy, #{
+            useragent => undefined,
+            peer_ip => undefined,
+            nonce => any,
+            pkce_verifier => none
+        }, Req1),
 
     {ok, Req3} = cowboy_session:expire(Req2),
 
@@ -126,7 +135,10 @@ init(Req, Opts) ->
         {ok, Scope} ?= fetch_request_param(<<"scope">>, RequestParams),
         Scopes = oidcc_scope:parse(Scope),
 
-        TokenOpts = maps:merge(#{nonce => Nonce, scope => Scopes}, maps:with([redirect_uri, pkce, request_opts], Opts)),
+        TokenOpts = maps:merge(
+            #{nonce => Nonce, scope => Scopes, pkce_verifier => PkceVerifier},
+            maps:with([redirect_uri, pkce, request_opts], Opts)
+        ),
 
         {ok, Token} ?= retrieve_token(Code, ProviderId, ClientId, ClientSecret, RetrieveUserinfo, TokenOpts),
         {ok, UserinfoClaims} ?= retrieve_userinfo(Token, ProviderId, ClientId, ClientSecret, RetrieveUserinfo),
