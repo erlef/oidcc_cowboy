@@ -6,7 +6,7 @@ body:
     attributes:
       value: |
         - Create a discussion instead if you are looking for support:
-          https://github.com/Erlang-Openid/oidcc_cowboy/discussions
+          https://github.com/erlef/oidcc_cowboy/discussions
   - type: input
     id: version
     attributes:
