@@ -37,7 +37,7 @@ jobs:
           key: hex_publish-${{ runner.os }}-${{ steps.setupBEAM.outputs.otp-version }}-${{ hashFiles('rebar.config') }}
           restore-keys: |
             hex_publish-${{ runner.os }}-${{ steps.setupBEAM.outputs.otp-version }}-
-      - run: rebar3 hex publish --yes
+      - run: rebar3 hex publish -r hexpm --yes
         env:
           HEX_API_KEY: ${{ secrets.HEX_API_KEY }}
 
@@ -59,11 +59,11 @@ jobs:
           key: hex_build-${{ runner.os }}-${{ steps.setupBEAM.outputs.otp-version }}-${{ hashFiles('rebar.config') }}
           restore-keys: |
             hex_build-${{ runner.os }}-${{ steps.setupBEAM.outputs.otp-version }}-
-      - run: rebar3 hex build --output package.tar
+      - run: rebar3 hex build
       - uses: actions/upload-artifact@v3
         with:
           name: package
-          path: package.tar
+          path: _build/default/lib/oidcc_cowboy/hex/oidcc_cowboy-*.tar
 
   upload:
     name: "Upload"
@@ -83,9 +83,13 @@ jobs:
         with:
           name: package
           path: .
+      - id: extract_raw_version
+        run: |
+          RAW_VERSION=$(echo "${{ inputs.releaseName }}" | sed 's/^v//')
+          echo "RAW_VERSION=$RAW_VERSION" >> $GITHUB_OUTPUT
       - name: Upload
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           gh release upload --clobber "${{ inputs.releaseName }}" \
-            package.tar
+            "oidcc_cowboy-${{ steps.extract_raw_version.outputs.RAW_VERSION }}.tar"
