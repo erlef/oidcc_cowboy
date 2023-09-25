@@ -112,37 +112,42 @@ init(Req, Opts) ->
         cowboy_req:reply(500, #{}, <<"internal error">>, FailureReq)
     end),
 
-    {#{
-        useragent := Useragent,
-        peer_ip := PeerIp,
-        nonce := Nonce,
-        pkce_verifier := PkceVerifier
-    }, Req2} =
-        cowboy_session:get(oidcc_cowboy, #{
-            useragent => undefined,
-            peer_ip => undefined,
-            nonce => any,
-            pkce_verifier => none
-        }, Req1),
+    {
+        #{
+            useragent := Useragent,
+            peer_ip := PeerIp,
+            nonce := Nonce,
+            pkce_verifier := PkceVerifier
+        },
+        Req2
+    } =
+        cowboy_session:get(
+            oidcc_cowboy,
+            #{
+                useragent => undefined,
+                peer_ip => undefined,
+                nonce => any,
+                pkce_verifier => none
+            },
+            Req1
+        ),
 
     {ok, Req3} = cowboy_session:expire(Req2),
 
     maybe
         ok ?= check_peer_ip(Req, PeerIp, CheckPeerId),
         ok ?= check_useragent(Req, Useragent, CheckUseragent),
-
         {ok, Code} ?= fetch_request_param(<<"code">>, RequestParams),
         {ok, Scope} ?= fetch_request_param(<<"scope">>, RequestParams),
         Scopes = oidcc_scope:parse(Scope),
-
         TokenOpts = maps:merge(
             #{nonce => Nonce, scope => Scopes, pkce_verifier => PkceVerifier},
             maps:with([redirect_uri, pkce, request_opts], Opts)
         ),
-
-        {ok, Token} ?= retrieve_token(Code, ProviderId, ClientId, ClientSecret, RetrieveUserinfo, TokenOpts),
-        {ok, UserinfoClaims} ?= retrieve_userinfo(Token, ProviderId, ClientId, ClientSecret, RetrieveUserinfo),
-
+        {ok, Token} ?=
+            retrieve_token(Code, ProviderId, ClientId, ClientSecret, RetrieveUserinfo, TokenOpts),
+        {ok, UserinfoClaims} ?=
+            retrieve_userinfo(Token, ProviderId, ClientId, ClientSecret, RetrieveUserinfo),
         {ok, HandleSuccess(Req3, Token, UserinfoClaims), nil}
     else
         {error, Reason} ->

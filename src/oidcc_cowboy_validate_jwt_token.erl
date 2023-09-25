@@ -78,7 +78,8 @@ execute(#{oidcc_cowboy_extract_authorization := Token} = Req, #{?MODULE := Opts}
     ),
 
     maybe
-        {ok, ClientContext} ?= oidcc_client_context:from_configuration_worker(Provider, ClientId, ClientSecret),
+        {ok, ClientContext} ?=
+            oidcc_client_context:from_configuration_worker(Provider, ClientId, ClientSecret),
         {ok, Claims} ?= oidcc_token:validate_id_token(Token, ClientContext, any),
         {ok, maps:put(?MODULE, Claims, Req), Env}
     else

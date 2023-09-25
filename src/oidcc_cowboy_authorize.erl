@@ -90,7 +90,9 @@ init(Req, Opts) ->
     ClientId = maps:get(client_id, Opts),
     ClientSecret = maps:get(client_secret, Opts),
 
-    HandleFailure = maps:get(handle_failure, Opts, fun(FailureReq, _Reason) -> cowboy_req:reply(500, #{}, <<"internal error">>, FailureReq) end),
+    HandleFailure = maps:get(handle_failure, Opts, fun(FailureReq, _Reason) ->
+        cowboy_req:reply(500, #{}, <<"internal error">>, FailureReq)
+    end),
 
     Nonce = generate_random_length_string(128),
     State = proplists:get_value(<<"state">>, QueryList, undefined),
@@ -102,17 +104,20 @@ init(Req, Opts) ->
     ),
 
     maybe
-        {ok, Req1} ?= cowboy_session:set(oidcc_cowboy, #{
-            nonce => Nonce,
-            peer_ip => PeerIp,
-            useragent => Useragent,
-            pkce_verifier => PkceVerifier
-        }, Req),
-
-        {ok, Url} ?= oidcc:create_redirect_url(ProviderId, ClientId, ClientSecret, AuthorizationOpts),
-
+        {ok, Req1} ?=
+            cowboy_session:set(
+                oidcc_cowboy,
+                #{
+                    nonce => Nonce,
+                    peer_ip => PeerIp,
+                    useragent => Useragent,
+                    pkce_verifier => PkceVerifier
+                },
+                Req
+            ),
+        {ok, Url} ?=
+            oidcc:create_redirect_url(ProviderId, ClientId, ClientSecret, AuthorizationOpts),
         Req2 = cowboy_req:reply(302, #{<<"location">> => Url}, <<>>, Req1),
-
         {ok, Req2, nil}
     else
         {error, Reason} ->
