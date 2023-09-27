@@ -1,12 +1,6 @@
 on:
   workflow_call:
     inputs:
-      otpVersion:
-        required: true
-        type: string
-      rebarVersion:
-        required: true
-        type: string
       releaseName:
         required: false
         type: string
@@ -24,8 +18,8 @@ jobs:
       - uses: erlef/setup-beam@v1
         id: setupBEAM
         with:
-          otp-version: ${{ inputs.otpVersion }}
-          rebar3-version: ${{ inputs.rebarVersion }}
+          version-file: .tool-versions
+          version-type: strict
       - uses: actions/cache@v3
         with:
           path: _build
