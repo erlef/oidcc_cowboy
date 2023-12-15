@@ -82,9 +82,9 @@ jobs:
           restore-keys: |
             eunit-${{ runner.os }}-${{ steps.setupBEAM.outputs.otp-version }}-
       - run: rebar3 eunit --cover --cover_export_name "eunit-${{ steps.setupBEAM.outputs.otp-version }}"
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
-          name: eunit-coverage
+          name: eunit-coverage-${{ matrix.otp }}
           path: _build/test/cover/eunit-${{ steps.setupBEAM.outputs.otp-version }}.coverdata
 
   conformance:
@@ -120,9 +120,9 @@ jobs:
           restore-keys: |
             ct-${{ runner.os }}-${{ steps.setupBEAM.outputs.otp-version }}-
       - run: rebar3 ct --cover --cover_export_name "ct-${{ steps.setupBEAM.outputs.otp-version }}"
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
-          name: ct-coverage
+          name: ct-coverage-${{ matrix.otp }}
           path: _build/test/cover/ct-${{ steps.setupBEAM.outputs.otp-version }}.coverdata
 
   coverage:
@@ -145,16 +145,16 @@ jobs:
           key: cover-${{ runner.os }}-${{ steps.setupBEAM.outputs.otp-version }}-${{ hashFiles('rebar.config') }}
           restore-keys: |
             cover-${{ runner.os }}-${{ steps.setupBEAM.outputs.otp-version }}-
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
-          name: ct-coverage
-          path: _build/test/cover/
-      - uses: actions/download-artifact@v3
-        with:
-          name: eunit-coverage
-          path: _build/test/cover/
+          path: artifacts
+      - name: Unpack Artifacts
+        run: |
+          mkdir -p _build/test/cover/
+          mv artifacts/*/*.coverdata _build/test/cover/
+          rm -rf artifacts
       - run: rebar3 cover
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: _build/test/cover/
@@ -179,18 +179,14 @@ jobs:
           key: cover-${{ runner.os }}-${{ steps.setupBEAM.outputs.otp-version }}-${{ hashFiles('rebar.config') }}
           restore-keys: |
             cover-${{ runner.os }}-${{ steps.setupBEAM.outputs.otp-version }}-
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
-          name: ct-coverage
-          path: _build/test/cover/
-      - uses: actions/download-artifact@v3
-        with:
-          name: eunit-coverage
-          path: _build/test/cover/
-      - uses: actions/upload-artifact@v3
-        with:
-          name: coverage-report
-          path: _build/test/cover/
+          path: artifacts
+      - name: Unpack Artifacts
+        run: |
+          mkdir -p _build/test/cover/
+          mv artifacts/*/*.coverdata _build/test/cover/
+          rm -rf artifacts
       - run: rebar3 as test compile
       - run: rebar3 as test coveralls send
         env:
