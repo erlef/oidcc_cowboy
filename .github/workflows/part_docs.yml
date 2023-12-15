@@ -33,7 +33,7 @@ jobs:
           restore-keys: |
             docs-bdepsuild-{{ runner.os }}-${{ steps.setupBEAM.outputs.otp-version }}-
       - run: rebar3 ex_doc
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: docs
           path: doc
