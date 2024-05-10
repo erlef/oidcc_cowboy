@@ -100,7 +100,7 @@ init(Req, Opts) ->
 
     AuthorizationOpts = maps:merge(
         #{nonce => Nonce, state => State, pkce_verifier => PkceVerifier},
-        maps:with([redirect_uri, scopes, state, pkce, url_extension], Opts)
+        maps:with([redirect_uri, scopes, state, pkce, url_extension, preferred_auth_methods], Opts)
     ),
 
     maybe

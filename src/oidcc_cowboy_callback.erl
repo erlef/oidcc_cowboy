@@ -153,7 +153,7 @@ init(Req, Opts) ->
             end,
         TokenOpts = maps:merge(
             #{nonce => Nonce, scope => Scopes, pkce_verifier => PkceVerifier},
-            maps:with([redirect_uri, pkce, request_opts], Opts)
+            maps:with([redirect_uri, pkce, request_opts, preferred_auth_methods], Opts)
         ),
         {ok, Token} ?=
             retrieve_token(Code, ProviderId, ClientId, ClientSecret, RetrieveUserinfo, TokenOpts),
