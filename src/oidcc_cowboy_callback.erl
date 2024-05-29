@@ -57,7 +57,7 @@
     check_useragent => boolean(),
     check_peer_ip => boolean(),
     retrieve_userinfo => boolean(),
-    scopes => [oidcc_scope:scopes()],
+    scopes => oidcc_scope:scopes(),
     request_opts => oidcc_http_util:request_opts(),
     handle_success := fun(
         (
@@ -85,7 +85,7 @@
 %%   <li>`check_peer_ip' - check if the client IP is the same as before the
 %%     authorization request</li>
 %%   <li>`retrieve_userinfo' - whether to load userinfo from the provider</li>
-%%   <li>`scopes' - list of scopes to use in token request (if not present in Req); defaults to `[<<"openid">>]'</li>
+%%   <li>`scopes' - list of scopes to use in token request (if not present in Req); defaults to `[openid]'</li>
 %%   <li>`request_opts' - request opts for http calls to provider</li>
 %%   <li>`handle_success' - handler to react to successful token retrieval
 %%     (render response etc.)</li>
@@ -147,7 +147,7 @@ init(Req, Opts) ->
                             _ ->
                                 case maps:get(scopes, Opts, [openid]) of
                                     [_ | _] = Scps ->
-                                        {ok, lists:map(fun normalize_scope/1, Scps)};
+                                        {ok, Scps};
                                     _ ->
                                         {error, invalid_scopes}
                                 end
@@ -234,11 +234,3 @@ retrieve_userinfo(Token, ProviderId, ClientId, ClientSecret, true) ->
 %% @private
 terminate(_Reason, _Req, _State) ->
     ok.
-
-normalize_scope(Scope) when is_binary(Scope) ->
-    Scope;
-normalize_scope(Scope) when is_atom(Scope) ->
-    atom_to_binary(Scope, utf8);
-normalize_scope(Scope) when is_list(Scope) ->
-    list_to_binary(Scope).
-
