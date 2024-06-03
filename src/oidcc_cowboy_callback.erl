@@ -85,7 +85,7 @@
 %%   <li>`check_peer_ip' - check if the client IP is the same as before the
 %%     authorization request</li>
 %%   <li>`retrieve_userinfo' - whether to load userinfo from the provider</li>
-%%   <li>`scopes' - list of scopes to use in token request (if not present in Req); defaults to `[openid]'</li>
+%%   <li>`scopes' - list of scopes to use in token request (if not present in Req)</li>
 %%   <li>`request_opts' - request opts for http calls to provider</li>
 %%   <li>`handle_success' - handler to react to successful token retrieval
 %%     (render response etc.)</li>
@@ -145,11 +145,9 @@ init(Req, Opts) ->
                             {ok, Scope} ->
                                 {ok, oidcc_scope:parse(Scope)};
                             _ ->
-                                case maps:get(scopes, Opts, [openid]) of
-                                    [_ | _] = Scps ->
-                                        {ok, Scps};
-                                    _ ->
-                                        {error, invalid_scopes}
+                                case maps:get(scopes, Opts, undefined) of
+                                    [_ | _] = Scps -> {ok, Scps};
+                                    _ -> {error, {missing_request_param, <<"scope">>}}
                                 end
                         end,
         TokenOpts = maps:merge(
