@@ -23,21 +23,24 @@ retrieves_token(_Config) ->
 
     ClientConfigPath = code:priv_dir(oidcc_cowboy) ++ "/test/fixtures/zitadel-client.json",
     {ok, ClientConfigJson} = file:read_file(ClientConfigPath),
-    #{<<"clientId">> := ClientId, <<"clientSecret">> := ClientSecret, <<"projectId">> := ProjectId} = jose:decode(
+    #{<<"clientSecret">> := ClientSecret, <<"projectId">> := ProjectId} = jose:decode(
         ClientConfigJson
     ),
 
     Jwk = jose_jwk:from_pem(Key),
 
+    application:set_env(oidcc, max_clock_skew, 10),
     {ok, #oidcc_token{access = #oidcc_token_access{token = AccessToken}}} = oidcc:jwt_profile_token(
-        Subject, ConfigPid, ClientId, ClientSecret, Jwk, #{
+        Subject, ConfigPid, <<"231391584430604723">>, ClientSecret, Jwk, #{
             scope => [
+                <<"openid">>,
                 <<"urn:zitadel:iam:org:project:id:", ProjectId/binary, ":aud">>,
                 <<"profile">>
             ],
             kid => Kid
         }
     ),
+    application:unset_env(oidcc, max_clock_skew),
 
     Req0 = make_req(#{oidcc_cowboy_extract_authorization => AccessToken}),
     {ok, Req, _Env} = oidcc_cowboy_validate_jwt_token:execute(Req0, #{
