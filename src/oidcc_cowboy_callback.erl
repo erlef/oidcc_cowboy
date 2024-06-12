@@ -46,6 +46,7 @@
     | oidcc_userinfo:error()
     | useragent_mismatch
     | peer_ip_mismatch
+    | invalid_scopes
     | {missing_request_param, Param :: binary()}.
 
 -type opts() :: #{
@@ -56,6 +57,7 @@
     check_useragent => boolean(),
     check_peer_ip => boolean(),
     retrieve_userinfo => boolean(),
+    scopes => oidcc_scope:scopes(),
     request_opts => oidcc_http_util:request_opts(),
     handle_success := fun(
         (
@@ -83,6 +85,7 @@
 %%   <li>`check_peer_ip' - check if the client IP is the same as before the
 %%     authorization request</li>
 %%   <li>`retrieve_userinfo' - whether to load userinfo from the provider</li>
+%%   <li>`scopes' - list of scopes to use in token request (if not present in Req)</li>
 %%   <li>`request_opts' - request opts for http calls to provider</li>
 %%   <li>`handle_success' - handler to react to successful token retrieval
 %%     (render response etc.)</li>
@@ -138,8 +141,16 @@ init(Req, Opts) ->
         ok ?= check_peer_ip(Req, PeerIp, CheckPeerId),
         ok ?= check_useragent(Req, Useragent, CheckUseragent),
         {ok, Code} ?= fetch_request_param(<<"code">>, RequestParams),
-        {ok, Scope} ?= fetch_request_param(<<"scope">>, RequestParams),
-        Scopes = oidcc_scope:parse(Scope),
+        {ok, Scopes} ?=
+            case fetch_request_param(<<"scope">>, RequestParams) of
+                {ok, Scope} ->
+                    {ok, oidcc_scope:parse(Scope)};
+                _ ->
+                    case maps:get(scopes, Opts, undefined) of
+                        [_ | _] = Scps -> {ok, Scps};
+                        _ -> {error, {missing_request_param, <<"scope">>}}
+                    end
+            end,
         TokenOpts = maps:merge(
             #{nonce => Nonce, scope => Scopes, pkce_verifier => PkceVerifier},
             maps:with([redirect_uri, pkce, request_opts], Opts)
