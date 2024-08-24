@@ -1,34 +1,35 @@
-%%%-------------------------------------------------------------------
-%% @doc Cowboy Oidcc Authorization Handler
-%%
-%% <h2>Usage</h2>
-%%
-%% ```
-%% OidccCowboyOpts = #{
-%%     provider => config_provider_gen_server_name,
-%%     client_id => <<"client_id">>,
-%%     client_secret => <<"client_secret">>,
-%%     redirect_uri => "http://localhost/oidc/return"
-%% },
-%% OidccCowboyCallbackOpts = maps:merge(OidccCowboyOpts, #{
-%%     %% ...
-%% }),
-%% Dispatch = cowboy_router:compile([
-%%     {'_', [
-%%         {"/", oidcc_cowboy_authorize, OidccCowboyOpts},
-%%         {"/oidc/return", oidcc_cowboy_callback, OidccCowboyCallbackOpts}
-%%     ]}
-%% ]),
-%% {ok, _} = cowboy:start_clear(http, [{port, 8080}], #{
-%%     env => #{dispatch => Dispatch}
-%% })
-%% '''
-%% @end
-%% @since 2.0.0
-%%%-------------------------------------------------------------------
 -module(oidcc_cowboy_authorize).
 
 -feature(maybe_expr, enable).
+
+-include("internal/doc.hrl").
+?MODULEDOC("""
+Cowboy Oidcc Authorization Handler
+
+## Usage
+
+```erlang
+OidccCowboyOpts = #{
+    provider => config_provider_gen_server_name,
+    client_id => <<"client_id">>,
+    client_secret => <<"client_secret">>,
+    redirect_uri => "http://localhost/oidc/return"
+},
+OidccCowboyCallbackOpts = maps:merge(OidccCowboyOpts, #{
+    %% ...
+}),
+Dispatch = cowboy_router:compile([
+    {'_', [
+        {"/", oidcc_cowboy_authorize, OidccCowboyOpts},
+        {"/oidc/return", oidcc_cowboy_callback, OidccCowboyCallbackOpts}
+    ]}
+]),
+{ok, _} = cowboy:start_clear(http, [{port, 8080}], #{
+    env => #{dispatch => Dispatch}
+})
+```
+""").
+?MODULEDOC(#{since => <<"2.0.0">>}).
 
 -behaviour(cowboy_handler).
 
@@ -38,8 +39,29 @@
 -export_type([error/0]).
 -export_type([opts/0]).
 
+?DOC(#{since => <<"2.0.0">>}).
 -type error() :: oidcc_client_context:error() | oidcc_authorization:error().
 
+?DOC("""
+Configure authorization redirection
+
+See https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest
+
+## Parameters
+
+- `provider` - name of the running `m:oidcc_provider_configuration_worker`
+- `client_id` - Client ID
+- `client_secret` - Client Secret
+- `redirect_uri` - redirect target after authorization is completed
+- `scopes` - list of scopes to request (defaults to `[<<"openid">>]`)
+- `url_extension` - add custom query parameters to the authorization url
+- `handle_failure` - handler to react to errors (render response etc.)
+
+## Query Parameters
+
+- `state` - supplied as state parameter to the OpenID Provider
+""").
+?DOC(#{since => <<"2.0.0">>}).
 -type opts() :: #{
     provider := gen_server:server_ref(),
     client_id := binary(),
@@ -49,33 +71,8 @@
     url_extension => oidcc_http_util:query_params(),
     handle_failure => fun((Req :: cowboy_req:req(), Reason :: error()) -> cowboy_req:req())
 }.
-%% Configure authorization redirection
-%%
-%% See [https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest]
-%%
-%% <h2>Parameters</h2>
-%%
-%% <ul>
-%%   <li>`provider' - name of the running
-%%     `oidcc_provider_configuration_worker'</li>
-%%   <li>`client_id' - Client ID</li>
-%%   <li>`client_secret' - Client Secret</li>
-%%   <li>`redirect_uri' - redirect target after authorization is completed</li>
-%%   <li>`scopes' - list of scopes to request
-%%     (defaults to `[<<"openid">>]')</li>
-%%   <li>`url_extension' - add custom query parameters to the authorization
-%%     url</li>
-%%   <li>`handle_failure' - handler to react to errors
-%%     (render response etc.)</li>
-%% </ul>
-%%
-%% <h2>Query Parameters</h2>
-%%
-%% <ul>
-%%   <li>`state' - supplied as state parameter to the OpenID Provider</li>
-%% </ul>
 
-%% @private
+?DOC(false).
 -spec init(Req, Opts) -> {ok, Req, State} when
     Req :: cowboy_req:req(), Opts :: opts(), State :: nil.
 init(Req, Opts) ->
@@ -131,6 +128,6 @@ generate_random_length_string(Length) ->
     RandomBytes = crypto:strong_rand_bytes(RawLength),
     base64:encode(RandomBytes, #{mode => urlsafe, padding => false}).
 
-%% @private
+?DOC(false).
 terminate(_Reason, _Req, _State) ->
     ok.

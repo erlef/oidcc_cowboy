@@ -1,5 +1,7 @@
-%% @private
 -module(oidcc_cowboy_cache_noop).
+
+-include("internal/doc.hrl").
+?MODULEDOC(false).
 
 -behaviour(oidcc_cowboy_cache).
 
