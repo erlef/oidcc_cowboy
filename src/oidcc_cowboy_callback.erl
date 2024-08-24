@@ -1,36 +1,37 @@
-%%%-------------------------------------------------------------------
-%% @doc Cowboy Oidcc Callback Handler
-%%
-%% <h2>Usage</h2>
-%%
-%% ```
-%% OidccCowboyOpts = #{
-%%     provider => config_provider_gen_server_name,
-%%     client_id => <<"client_id">>,
-%%     client_secret => <<"client_secret">>,
-%%     redirect_uri => "http://localhost/oidc/return"
-%% },
-%% OidccCowboyCallbackOpts = maps:merge(OidccCowboyOpts, #{
-%%     handle_success => fun(Req, _Token, #{<<"sub">> := Subject}) ->
-%%         cowboy_req:reply(200, #{}, ["Hello ", Subject, "!"], Req)
-%%     end
-%% }),
-%% Dispatch = cowboy_router:compile([
-%%     {'_', [
-%%         {"/", oidcc_cowboy_authorize, OidccCowboyOpts},
-%%         {"/oidc/return", oidcc_cowboy_callback, OidccCowboyCallbackOpts}
-%%     ]}
-%% ]),
-%% {ok, _} = cowboy:start_clear(http, [{port, 8080}], #{
-%%     env => #{dispatch => Dispatch}
-%% })
-%% '''
-%% @end
-%% @since 2.0.0
-%%%-------------------------------------------------------------------
 -module(oidcc_cowboy_callback).
 
 -feature(maybe_expr, enable).
+
+-include("internal/doc.hrl").
+?MODULEDOC("""
+Cowboy Oidcc Callback Handler
+
+## Usage
+
+```erlang
+OidccCowboyOpts = #{
+    provider => config_provider_gen_server_name,
+    client_id => <<"client_id">>,
+    client_secret => <<"client_secret">>,
+    redirect_uri => "http://localhost/oidc/return"
+},
+OidccCowboyCallbackOpts = maps:merge(OidccCowboyOpts, #{
+    handle_success => fun(Req, _Token, #{<<"sub">> := Subject}) ->
+            cowboy_req:reply(200, #{}, ["Hello ", Subject, "!"], Req)
+    end
+}),
+Dispatch = cowboy_router:compile([
+    {'_', [
+        {"/", oidcc_cowboy_authorize, OidccCowboyOpts},
+        {"/oidc/return", oidcc_cowboy_callback, OidccCowboyCallbackOpts}
+    ]}
+]),
+{ok, _} = cowboy:start_clear(http, [{port, 8080}], #{
+    env => #{dispatch => Dispatch}
+})
+```
+""").
+?MODULEDOC(#{since => <<"2.0.0">>}).
 
 -behaviour(cowboy_handler).
 
@@ -40,6 +41,7 @@
 -export_type([error/0]).
 -export_type([opts/0]).
 
+?DOC(#{since => <<"2.0.0">>}).
 -type error() ::
     oidcc_client_context:error()
     | oidcc_token:error()
@@ -49,6 +51,29 @@
     | invalid_scopes
     | {missing_request_param, Param :: binary()}.
 
+?DOC("""
+Configure Token Retrieval
+
+See https://openid.net/specs/openid-connect-core-1_0.html#TokenEndpoint
+
+## Parameters
+
+- `provider` - name of the running `m:oidcc_provider_configuration_worker`
+- `client_id` - Client ID
+- `client_secret` - Client Secret
+- `redirect_uri` - redirect target after authorization is completed
+- `check_useragent` - check if useragent is the same as before the
+  authorization request
+- `check_peer_ip` - check if the client IP is the same as before the
+  authorization request
+- `retrieve_userinfo` - whether to load userinfo from the provider
+- `scopes` - list of scopes to use in token request (if not present in Req)
+- `request_opts` - request opts for http calls to provider
+- `handle_success` - handler to react to successful token retrieval
+  (render response etc.)
+- `handle_failure` - handler to react to errors (render response etc.)
+""").
+?DOC(#{since => <<"2.0.0">>}).
 -type opts() :: #{
     provider := gen_server:server_ref(),
     client_id := binary(),
@@ -68,32 +93,8 @@
     ),
     handle_failure => fun((Req :: cowboy_req:req(), Reason :: error()) -> cowboy_req:req())
 }.
-%% Configure Token Retrieval
-%%
-%% See [https://openid.net/specs/openid-connect-core-1_0.html#TokenEndpoint]
-%%
-%% <h2>Parameters</h2>
-%%
-%% <ul>
-%%   <li>`provider' - name of the running
-%%     `oidcc_provider_configuration_worker'</li>
-%%   <li>`client_id' - Client ID</li>
-%%   <li>`client_secret' - Client Secret</li>
-%%   <li>`redirect_uri' - redirect target after authorization is completed</li>
-%%   <li>`check_useragent' - check if useragent is the same as before the
-%%     authorization request</li>
-%%   <li>`check_peer_ip' - check if the client IP is the same as before the
-%%     authorization request</li>
-%%   <li>`retrieve_userinfo' - whether to load userinfo from the provider</li>
-%%   <li>`scopes' - list of scopes to use in token request (if not present in Req)</li>
-%%   <li>`request_opts' - request opts for http calls to provider</li>
-%%   <li>`handle_success' - handler to react to successful token retrieval
-%%     (render response etc.)</li>
-%%   <li>`handle_failure' - handler to react to errors
-%%     (render response etc.)</li>
-%% </ul>
 
-%% @private
+?DOC(false).
 -spec init(Req, Opts) -> {ok, Req, State} when
     Req :: cowboy_req:req(), Opts :: opts(), State :: nil.
 init(Req, Opts) ->
@@ -230,6 +231,6 @@ retrieve_userinfo(_Token, _ProviderId, _ClientId, _ClientSecret, false) ->
 retrieve_userinfo(Token, ProviderId, ClientId, ClientSecret, true) ->
     oidcc:retrieve_userinfo(Token, ProviderId, ClientId, ClientSecret, #{}).
 
-%% @private
+?DOC(false).
 terminate(_Reason, _Req, _State) ->
     ok.

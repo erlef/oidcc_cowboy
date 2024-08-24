@@ -1,44 +1,45 @@
-%%%-------------------------------------------------------------------
-%% @doc Validate extracted authorization token using introspection.
-%%
-%% See: [https://datatracker.ietf.org/doc/html/rfc7662]
-%%
-%% This middleware should be used together with
-%% {@link oidcc_cowboy_extract_authorization}.
-%%
-%% This middleware will send a introspection request for ever request. To avoid
-%% this, provide a `cache' to {@link opts()}.
-%%
-%% <h2>Usage</h2>
-%%
-%% ```
-%% OidccCowboyOpts = #{
-%%     provider => openid_confi_provider_name,
-%%     client_id => <<"client_id">>,
-%%     client_secret => <<"client_secret">>
-%% },
-%% Dispatch = cowboy_router:compile([
-%%     {'_', [
-%%         %% ...
-%%     ]}
-%% ]),
-%% {ok, _} = cowboy:start_clear(http, [{port, 8080}], #{
-%%     middlewares => [
-%%         oidcc_cowboy_extract_authorization,
-%%         oidcc_cowboy_introspect_token,
-%%         cowboy_router,
-%%         cowboy_handler
-%%     ],
-%%     env => #{
-%%         dispatch => Dispatch,
-%%         oidcc_cowboy_introspect_token => OidccCowboyOpts
-%%     }
-%% })
-%% '''
-%% @end
-%% @since 2.0.0
-%%%-------------------------------------------------------------------
 -module(oidcc_cowboy_introspect_token).
+
+-include("internal/doc.hrl").
+?MODULEDOC("""
+Validate extracted authorization token using introspection.
+
+See: https://datatracker.ietf.org/doc/html/rfc7662
+
+This middleware should be used together with
+`m:oidcc_cowboy_extract_authorization`.
+
+This middleware will send a introspection request for ever request. To avoid
+this, provide a `cache` to `t:opts/0`.
+
+## Usage
+
+```erlang
+OidccCowboyOpts = #{
+    provider => openid_confi_provider_name,
+    client_id => <<"client_id">>,
+    client_secret => <<"client_secret">>
+},
+Dispatch = cowboy_router:compile([
+    {'_', [
+        %% ...
+    ]}
+]),
+{ok, _} = cowboy:start_clear(http, [{port, 8080}], #{
+    middlewares => [
+        oidcc_cowboy_extract_authorization,
+        oidcc_cowboy_introspect_token,
+        cowboy_router,
+        cowboy_handler
+    ],
+    env => #{
+        dispatch => Dispatch,
+        oidcc_cowboy_introspect_token => OidccCowboyOpts
+    }
+})
+```
+""").
+?MODULEDOC(#{since => <<"2.0.0">>}).
 
 -behaviour(cowboy_middleware).
 
@@ -48,6 +49,19 @@
 
 -export_type([opts/0]).
 
+?DOC("""
+Options for the middleware
+
+## Options
+
+- `provider` - name of the `m:oidcc_provider_configuration_worker`
+- `client_id` - OAuth Client ID to use for the token introspection
+- `client_secret` - OAuth Client Secret to use for the token introspection
+- `token_introspection_opts` - Options to pass to the introspection
+- `send_inactive_token_response` - Customize Error Response for inactive token
+- `cache` - Cache introspection response - See `m:oidcc_cowboy_cache`
+""").
+?DOC(#{since => <<"2.0.0">>}).
 -type opts() :: #{
     provider := gen_server:server_ref(),
     client_id := binary(),
@@ -62,23 +76,8 @@
         ) -> {ok, cowboy_req:req(), cowboy_middleware:env()} | {stop, cowboy_req:req()}
     )
 }.
-%% Options for the middleware
-%%
-%% <h2>Options</h2>
-%%
-%% <ul>
-%%   <li>`provider' - name of the
-%%     {@link oidcc_provider_configuration_worker}</li>
-%%   <li>`client_id' - OAuth Client ID to use for the token introspection</li>
-%%   <li>`client_secret' - OAuth Client Secret to use for the token
-%%     introspection</li>
-%%   <li>`token_introspection_opts' - Options to pass to the introspection</li>
-%%   <li>`send_inactive_token_response' - Customize Error Response for inactive
-%%     token</li>
-%%   <li>`cache' - Cache introspection response - See {@link oidcc_cowboy_cache}</li>
-%% </ul>
 
-%% @private
+?DOC(false).
 execute(#{oidcc_cowboy_extract_authorization := undefined} = Req, #{?MODULE := _Opts} = Env) ->
     {ok, maps:put(?MODULE, undefined, Req), Env};
 execute(#{oidcc_cowboy_extract_authorization := Token} = Req, #{?MODULE := Opts} = Env) ->
