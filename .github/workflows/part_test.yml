@@ -17,7 +17,7 @@ jobs:
       rebarVersion: "${{ steps.toolVersions.outputs.REBAR_VERSION }}"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: "Read .tool-versions"
         id: toolVersions
         run: |
@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: erlef/setup-beam@v1
         id: setupBEAM
         with:
@@ -70,7 +70,7 @@ jobs:
             unstable: true
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: erlef/setup-beam@v1
         id: setupBEAM
         with:
@@ -111,7 +111,7 @@ jobs:
             unstable: true
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: erlef/setup-beam@v1
         id: setupBEAM
         with:
@@ -139,7 +139,7 @@ jobs:
     needs: ["eunit", "conformance"]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: erlef/setup-beam@v1
         id: setupBEAM
         with:
@@ -173,7 +173,7 @@ jobs:
     needs: ["eunit", "conformance"]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: erlef/setup-beam@v1
         id: setupBEAM
         with:
@@ -204,7 +204,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: erlef/setup-beam@v1
         id: setupBEAM
         with:
@@ -224,7 +224,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: erlef/setup-beam@v1
         id: setupBEAM
         with:
@@ -244,7 +244,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: erlef/setup-beam@v1
         id: setupBEAM
         with:
