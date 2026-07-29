@@ -9,6 +9,17 @@
 
 # oidcc_cowboy
 
+> [!WARNING]
+> **This library is deprecated and archived.**
+>
+> Since its first release in 2017, `oidcc_cowboy` has seen only 5'400 downloads
+> over 3'470 days, and no real dependants could be identified. For that reason,
+> the library is no longer maintained.
+>
+> If you rely on this library and would like to see it reinstated, that would
+> require a commitment to help maintain it. In that case, please contact the
+> [EEF Security WG](https://erlef.org/wg/security).
+
 Cowboy callback module for easy integration of OpenId Connect, using [oidcc](https://github.com/erlef/oidcc).
 
 [![EEF Security WG project](https://img.shields.io/badge/EEF-Security-black)](https://github.com/erlef/security-wg)
